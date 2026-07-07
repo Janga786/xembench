@@ -64,7 +64,8 @@ eval-smoke:
 	  --set tasks='[pick_cube_arm]' --set episodes_native=3 --set episodes_transfer=2 \
 	  --set instruction_conds='[canonical]' --set color_conds='[train]' \
 	  --set policies='[{type: bc, ckpt: "data/checkpoints/bc_overfit_check/best.pt"}]' \
-	  --set csv=data/results/eval_smoke.csv
+	  --set csv=data/results/eval_smoke.csv \
+	  --set episodes_csv=data/results/eval_smoke_episodes.csv
 
 ppo-smoke:
 	uv run python -m xembench.scripts.train_expert_ppo \
@@ -82,4 +83,5 @@ smoke: check test test-sim bc-smoke eval-smoke ppo-smoke
 
 clean-smoke:
 	rm -rf data/checkpoints/bc_overfit_check data/checkpoints/ppo_smoke \
-	  data/checkpoints/ppo_ft_smoke data/results/eval_smoke.csv
+	  data/checkpoints/ppo_ft_smoke data/results/eval_smoke.csv \
+	  data/results/eval_smoke_episodes.csv data/checkpoints/linux_gpu_smoke
