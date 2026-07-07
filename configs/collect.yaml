@@ -1,0 +1,8 @@
+# Demo collection defaults; override per run:
+#   --set task=apple_bowl_g1 --set policy=ppo:<ckpt> --set episodes=200
+task: pick_cube_arm
+policy: random          # random | ppo:<checkpoint path>
+episodes: 3
+source: collected       # filename tag: data/demos/{emb}/{env}/{source}.h5
+success_only: true
+out: null               # default: schema path under data/
