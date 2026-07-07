@@ -1,0 +1,21 @@
+# PPO expert on flat state + dense reward -> demonstration source for G1
+# tasks (B2). Defaults sized for the RTX 5090 GPU sim; the Mac smoke overrides
+# num_envs/total_timesteps.
+task: apple_bowl_g1
+out_dir: null            # default: data/checkpoints/expert_{task}_seed{seed}
+num_envs: 2048
+num_steps: 16
+total_timesteps: 30000000
+lr: 3.0e-4
+gamma: 0.9
+gae_lambda: 0.9
+clip_coef: 0.2
+ent_coef: 0.0
+vf_coef: 0.5
+max_grad_norm: 0.5
+update_epochs: 8
+num_minibatches: 32
+reward_mode: dense
+hidden: 256
+device: auto
+log_every: 1

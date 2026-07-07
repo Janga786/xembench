@@ -1,0 +1,22 @@
+# Optional containerized Linux environment for the RTX 5090 box.
+# Native uv setup (scripts/setup_linux.sh) is simpler; use this when you want
+# isolation. Requires NVIDIA Container Toolkit; run with:
+#   docker run --gpus all -e NVIDIA_DRIVER_CAPABILITIES=all -it xembench
+FROM nvidia/cuda:12.8.0-devel-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    NVIDIA_DRIVER_CAPABILITIES=all
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git curl ca-certificates \
+    libvulkan1 vulkan-tools \
+    libglvnd0 libgl1 libegl1 libxext6 libx11-6 \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
+WORKDIR /workspace/xembench
+COPY . .
+RUN uv sync --frozen
+
+CMD ["bash"]

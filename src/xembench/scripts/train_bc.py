@@ -10,13 +10,19 @@ directory (data/demos/{embodiment}/{env_id}/*.h5).
 import sys
 from glob import glob
 
-from xembench.utils.config import common_parser, load_config, load_yaml, repo_root
+from xembench.utils.config import (
+    common_parser,
+    load_config,
+    load_yaml,
+    repo_root,
+    resolve_path,
+)
 from xembench.utils.seeding import seed_everything
 
 
 def resolve_demos(cfg: dict) -> list[str]:
     if cfg.get("demos"):
-        return cfg["demos"]
+        return [resolve_path(p) for p in cfg["demos"]]
     tasks = load_yaml(repo_root() / "configs" / "tasks.yaml")["tasks"]
     task = tasks[cfg["task"]]
     pattern = f"{repo_root()}/data/demos/{task['embodiment']}/{task['env_id']}/*.h5"
@@ -34,6 +40,7 @@ def main() -> int:
     cfg["demos"] = resolve_demos(cfg)
     if not cfg.get("out_dir"):
         cfg["out_dir"] = f"{repo_root()}/data/checkpoints/bc_{cfg['task']}_seed{cfg['seed']}"
+    cfg["out_dir"] = resolve_path(cfg["out_dir"])
 
     from xembench.training.bc_trainer import train_bc  # torch import deferred
 

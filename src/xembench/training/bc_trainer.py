@@ -51,7 +51,7 @@ def _validate(model: BCPolicy, loader: DataLoader, device: torch.device) -> floa
 
 def train_bc(cfg: dict) -> dict:
     device = auto_device(cfg.get("device", "auto"))
-    out_dir = Path(cfg["out_dir"])
+    out_dir = Path(cfg["out_dir"]).resolve()  # SAPIEN may chdir; stay absolute
     out_dir.mkdir(parents=True, exist_ok=True)
     dump_run_config(cfg, out_dir)
     writer = SummaryWriter(out_dir / "tb")

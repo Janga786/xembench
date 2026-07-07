@@ -58,9 +58,11 @@ def collect(cfg: dict) -> int:
     )
     policy = make_policy(cfg["policy"], env, adapter)
 
-    out = cfg.get("out") or demo_path(
+    from xembench.utils.config import resolve_path
+
+    out = resolve_path(cfg.get("out") or demo_path(
         repo_root() / "data", task["embodiment"], task["env_id"], cfg["source"]
-    )
+    ))
     n_target = cfg["episodes"]
     success_only = cfg.get("success_only", True)
     max_steps = task["max_steps"]

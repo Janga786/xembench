@@ -81,3 +81,11 @@ def dump_run_config(cfg: dict, run_dir: str | Path) -> None:
 
 def repo_root() -> Path:
     return Path(__file__).resolve().parents[3]
+
+
+def resolve_path(p: str | Path) -> str:
+    """Anchor relative paths at the repo root. SAPIEN's shader compilation can
+    change the process cwd, so every path that crosses an env-creation
+    boundary must be absolute."""
+    p = Path(p)
+    return str(p if p.is_absolute() else repo_root() / p)

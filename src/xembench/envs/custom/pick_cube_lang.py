@@ -117,6 +117,14 @@ class PickCubeLangEnv(PickCubeEnv):
             for i in idx
         ]
 
+    # -- motion-planning compat: ManiSkill's Panda solver manipulates
+    # `env.cube`; resolve it to the CURRENT episode's language target so the
+    # stock solver produces color-grounded demos. num_envs=1 collection only.
+    @property
+    def cube(self):
+        assert self.num_envs == 1, "cube property is for single-env MP collection"
+        return self.cubes[int(self.target_idx[0])]
+
     # -- helpers over the per-env target cube --------------------------------
     def _all_cube_pos(self) -> torch.Tensor:  # [B, n_cubes, 3]
         return torch.stack([c.pose.p for c in self.cubes], dim=1)

@@ -1,0 +1,18 @@
+# Full evaluation grid (Linux, B5). Mac smoke overrides tasks/episodes.
+csv: data/results/eval.csv
+episodes_native: 100
+episodes_transfer: 50
+seeds: [0]
+vision: nature_cnn
+device: auto
+transfer: true
+instruction_conds: [canonical, heldout]
+color_conds: [train, unseen]        # Lang envs only; stock scenes are 'fixed'
+tasks: [pick_cube_arm, stack_cube_arm, push_t_arm, pull_tool_arm,
+        apple_bowl_g1, transport_box_g1]
+policies:
+  - type: bc
+    ckpt: data/checkpoints/bc_{task}_seed{seed}/best.pt
+  - type: bc_ppo
+    ckpt: data/checkpoints/ppo_{task}_seed{seed}/best.pt
+    optional: true                  # skip cells whose fine-tune hasn't run yet

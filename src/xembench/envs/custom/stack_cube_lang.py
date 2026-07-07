@@ -82,6 +82,18 @@ class StackCubeLangEnv(StackCubeEnv):
             for s, d in zip(src, dst)
         ]
 
+    # -- motion-planning compat: the stock solver stacks env.cubeA onto
+    # env.cubeB; resolve to the episode's (source, base). num_envs=1 only.
+    @property
+    def cubeA(self):
+        assert self.num_envs == 1, "cubeA property is for single-env MP collection"
+        return self.cubes[int(self.src_idx[0])]
+
+    @property
+    def cubeB(self):
+        assert self.num_envs == 1, "cubeB property is for single-env MP collection"
+        return self.cubes[int(self.dst_idx[0])]
+
     # -- per-env (source, base) helpers ---------------------------------------
     def _gather_pos(self, idx: torch.Tensor) -> torch.Tensor:  # [B, 3]
         pos = torch.stack([c.pose.p for c in self.cubes], dim=1)

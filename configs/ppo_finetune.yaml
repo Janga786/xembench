@@ -1,0 +1,24 @@
+# Sparse-reward PPO fine-tuning of a trained BC policy (B4).
+# reward = success - step_penalty; frozen-BC L2 pull guards against collapse.
+task: pick_cube_arm
+bc_ckpt: null            # required: data/checkpoints/bc_{task}_seed{seed}/best.pt
+out_dir: null            # default: data/checkpoints/ppo_{task}_seed{seed}
+num_envs: 64
+num_steps: 50
+total_timesteps: 2000000
+lr: 1.0e-4
+gamma: 0.99
+gae_lambda: 0.95
+clip_coef: 0.2
+ent_coef: 0.0
+vf_coef: 0.5
+max_grad_norm: 0.5
+update_epochs: 4
+num_minibatches: 8
+step_penalty: 0.01
+bc_reg_coef: 1.0
+init_logstd: -2.0
+freeze_vision: true
+vision: nature_cnn
+paraphrase_p: 0.7
+device: auto

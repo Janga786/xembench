@@ -23,7 +23,6 @@ sub-envs before returning, so the unwrapped env state is already the new
 episode's when we resample).
 """
 
-import gymnasium as gym
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -49,10 +48,13 @@ def flatten_agent_extra(obs: dict) -> torch.Tensor:
     )
 
 
-class UnifiedObsWrapper(gym.Wrapper):
+class UnifiedObsWrapper:
+    """Duck-typed (not gym.Wrapper): must wrap both plain ManiSkill envs and
+    ManiSkillVectorEnv, which is a gymnasium VectorEnv, not an Env."""
+
     def __init__(
         self,
-        env: gym.Env,
+        env,
         adapter: EmbodimentAdapter,
         camera: str,
         family: str,
@@ -62,7 +64,7 @@ class UnifiedObsWrapper(gym.Wrapper):
         language_seed: int = 0,
         include_flat_state: bool = False,
     ):
-        super().__init__(env)
+        self.env = env
         assert instruction_mode in ("canonical", "train", "heldout")
         self.adapter = adapter
         self.camera = camera
@@ -78,8 +80,16 @@ class UnifiedObsWrapper(gym.Wrapper):
         self._token_len: torch.Tensor | None = None
 
     # -- instructions ----------------------------------------------------------
+    def _base_env(self):
+        # Resolve through ManiSkillVectorEnv (gymnasium VectorEnv.unwrapped
+        # returns itself; ManiSkill exposes the underlying env as .base_env).
+        env = self.env
+        if hasattr(env, "base_env"):
+            return env.base_env.unwrapped
+        return env.unwrapped
+
     def _episode_slots(self) -> list[dict]:
-        u = self.env.unwrapped
+        u = self._base_env()
         if hasattr(u, "language_slots"):
             return u.language_slots()
         return [dict(self.static_slots)] * u.num_envs
@@ -135,6 +145,9 @@ class UnifiedObsWrapper(gym.Wrapper):
         if self.include_flat_state:
             out["flat_state"] = flatten_agent_extra(obs)
         return out
+
+    def __getattr__(self, name):
+        return getattr(self.env, name)
 
     # -- gym API ----------------------------------------------------------------
     def reset(self, **kwargs):
