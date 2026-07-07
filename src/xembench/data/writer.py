@@ -6,10 +6,15 @@ from pathlib import Path
 import h5py
 import numpy as np
 
-import mani_skill
-
 from xembench.constants import A_CANON, IMG_SIZE, P_CANON
 from xembench.data.schema import SCHEMA_VERSION
+
+try:  # simulator not installed on analysis/CI machines; version is metadata only
+    import mani_skill
+
+    _MANI_SKILL_VERSION = mani_skill.__version__
+except ImportError:  # pragma: no cover - exercised only in CI
+    _MANI_SKILL_VERSION = "unavailable"
 
 
 class DemoWriter:
@@ -35,7 +40,7 @@ class DemoWriter:
             embodiment=embodiment,
             camera=camera,
             control_mode=control_mode,
-            mani_skill_version=mani_skill.__version__,
+            mani_skill_version=_MANI_SKILL_VERSION,
         )
 
     def add_episode(

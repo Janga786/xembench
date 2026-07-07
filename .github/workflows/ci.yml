@@ -1,0 +1,46 @@
+# Minimal CI: pure unit tests only (no simulator, no GPU, no rendering).
+# The simulator-dependent suites (dataset round-trip, env smoke, BC overfit)
+# run locally via `make test` / `make test-sim` / `make smoke` — see
+# docs/ci_notes.md for why they are excluded here.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pure-unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # CPU torch explicitly: the repo's own uv index gating would pull
+      # multi-GB cu128 wheels on Linux, pointless without a GPU.
+      - name: Install CPU torch + pure deps
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy pyyaml pandas tabulate h5py pytest
+
+      - name: Install xembench (no deps — simulator intentionally absent)
+        run: pip install -e . --no-deps
+
+      - name: Run pure unit tests
+        run: |
+          pytest -q \
+            tests/test_tokenizer.py \
+            tests/test_paraphrase.py \
+            tests/test_parser.py \
+            tests/test_adapters.py \
+            tests/test_models_shapes.py \
+            tests/test_canonical_metadata.py \
+            tests/test_registries.py \
+            tests/test_analysis.py \
+            tests/test_paths.py \
+            tests/test_demo_schema_validator.py \
+            tests/test_video_index.py

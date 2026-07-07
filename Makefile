@@ -11,7 +11,8 @@ MS_DEMOS := $(HOME)/.maniskill/demos/PickCube-v1/motionplanning
 SLICE := data/demos/panda/PickCube-v1/hf_replay_check.h5
 SLOTS := {"color": "red", "object": "cube", "relation": "on", "receptacle": "green target"}
 
-.PHONY: check test test-sim data-slice bc-smoke eval-smoke ppo-smoke smoke clean-smoke
+.PHONY: check test test-sim data-slice bc-smoke eval-smoke ppo-smoke smoke clean-smoke \
+        mac-check toy-report video-index phase-b-help docs
 
 check:
 	uv run python -m xembench.scripts.setup_check
@@ -21,6 +22,24 @@ test:
 
 test-sim:
 	uv run pytest -m sim -q
+
+mac-check:
+	uv run python scripts/check_env.py
+
+# Full analysis pipeline on labeled synthetic data (fast, any machine);
+# refreshes the committed reports/example_* documentation examples.
+toy-report:
+	uv run python scripts/make_report_assets.py --toy
+
+video-index:
+	uv run python -m xembench.analysis.video_index
+
+phase-b-help:
+	@cat docs/phase_b_commands.md
+
+docs:
+	@echo "docs/ index:" && ls -1 docs/*.md | sed 's/^/  /'
+	@echo "start with README.md, then docs/architecture.md"
 
 $(SLICE):
 	uv run python -m mani_skill.utils.download_demo PickCube-v1

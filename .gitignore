@@ -5,14 +5,41 @@ __pycache__/
 .venv/
 .pytest_cache/
 
-# Project artifacts (large / regenerable)
+# Project artifacts (large / regenerable) — keep .gitkeep + README/INDEX files
 data/demos/
 data/checkpoints/
 data/results/
 data/frames/
 runs/
+outputs/*
+!outputs/.gitkeep
+artifacts/*
+!artifacts/videos/
+artifacts/videos/*
+!artifacts/videos/README.md
+!artifacts/videos/INDEX.md
+!artifacts/videos/raw/
+artifacts/videos/raw/*
+!artifacts/videos/raw/.gitkeep
+!artifacts/videos/edited/
+artifacts/videos/edited/*
+!artifacts/videos/edited/.gitkeep
+reports/assets/
+
+# Media (belongs in artifacts/, but belt-and-braces)
+*.mp4
+*.avi
+*.gif
+
+# Experiment trackers / logs
+wandb/
+mlruns/
+tb_logs/
+*.log
 
 # ManiSkill asset cache lives in ~/.maniskill, nothing local
 
-# OS
+# OS / editors
 .DS_Store
+.idea/
+.vscode/
