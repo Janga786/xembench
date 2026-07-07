@@ -1,0 +1,12 @@
+# PRESET: motion-planning demos for the arm Lang tasks — B1.
+# Consumer: python -m xembench.experts.motion_plan_arm --config configs/presets/panda_demo_collection.yaml \
+#             --set task=pick_cube_arm    (then task=stack_cube_arm, task=pull_tool_arm)
+# Machine:  LINUX ONLY (mplib is Linux-only; module is UNTESTED until B1) | Runtime: ~1-2 h/task
+# Gate:     ~100% success by construction (success-filtered) and the printed
+#           color distribution must cover all train colors.
+task: pick_cube_arm
+episodes: 200
+source: motion_planning
+success_only: true
+out: null
+policy: n/a             # unused by motion_plan_arm; present for schema compatibility

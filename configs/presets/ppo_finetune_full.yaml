@@ -1,0 +1,28 @@
+# PRESET: full sparse-reward PPO fine-tune of a trained BC policy — the B4 recipe.
+# Consumer: python -m xembench.scripts.train_ppo_finetune --config configs/presets/ppo_finetune_full.yaml \
+#             --set task=<task>
+# Machine:  Linux 5090 ONLY (GPU-parallel rgb sim) | Runtime: ~4-12 h/task
+# Gate:     success must not fall below the BC baseline (watch charts/success_rate,
+#           losses/approx_kl, losses/bc_reg in TensorBoard).
+task: pick_cube_arm
+bc_ckpt: null
+out_dir: null
+num_envs: 64            # raise to 128 if VRAM allows; rgb buffers are the limit
+num_steps: 50
+total_timesteps: 2000000
+lr: 1.0e-4
+gamma: 0.99
+gae_lambda: 0.95
+clip_coef: 0.2
+ent_coef: 0.0
+vf_coef: 0.5
+max_grad_norm: 0.5
+update_epochs: 4
+num_minibatches: 8
+step_penalty: 0.01
+bc_reg_coef: 1.0        # L2 pull toward frozen BC actor; lower if learning stalls, raise if collapse
+init_logstd: -2.0
+freeze_vision: true
+vision: nature_cnn
+paraphrase_p: 0.7
+device: auto

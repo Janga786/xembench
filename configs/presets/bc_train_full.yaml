@@ -1,0 +1,20 @@
+# PRESET: full BC training for one (task, embodiment) — the B3 recipe.
+# Consumer: python -m xembench.scripts.train_bc --config configs/presets/bc_train_full.yaml --set task=<task> --seed <s>
+# Machine:  Linux 5090 recommended (<1 h/task); Mac works but slow | Runtime: ~1 h
+# Prereq:   200-episode demo file for the task (B1/B2).
+task: pick_cube_arm
+demos: []
+out_dir: null
+vision: nature_cnn      # switch to resnet18 only as an ablation; PPO fine-tune assumes nature_cnn speed
+steps: 50000
+batch_size: 256
+lr: 3.0e-4
+val_fraction: 0.1
+eval_every: 500
+log_every: 50
+augment: true
+paraphrase_augment: true
+paraphrase_p: 0.7
+preload: true           # 200-ep task file fits in RAM comfortably
+num_workers: 4
+device: auto

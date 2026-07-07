@@ -1,0 +1,26 @@
+# PRESET: PPO fine-tune no-crash/learning-signal check on a BC checkpoint.
+# Consumer: python -m xembench.scripts.train_ppo_finetune --config configs/presets/ppo_finetune_small.yaml \
+#             --set task=<task> --set bc_ckpt=<path/best.pt>
+# Machine:  Mac (num_envs=1 CPU sim) or Linux | Runtime: minutes
+task: pick_cube_arm
+bc_ckpt: null           # default: data/checkpoints/bc_{task}_seed{seed}/best.pt
+out_dir: null
+num_envs: 1
+num_steps: 50
+total_timesteps: 2000
+lr: 1.0e-4
+gamma: 0.99
+gae_lambda: 0.95
+clip_coef: 0.2
+ent_coef: 0.0
+vf_coef: 0.5
+max_grad_norm: 0.5
+update_epochs: 2
+num_minibatches: 2
+step_penalty: 0.01
+bc_reg_coef: 1.0
+init_logstd: -2.0
+freeze_vision: true
+vision: nature_cnn
+paraphrase_p: 0.7
+device: auto

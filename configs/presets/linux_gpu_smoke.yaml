@@ -1,0 +1,24 @@
+# PRESET: first thing to run after scripts/setup_linux.sh — a short GPU-sim
+# PPO burn-in that exercises num_envs=256 vectorized training end to end.
+# Success is NOT expected to be high; the gate is throughput + no crash +
+# a rising success curve within a few updates.
+# Consumer: python -m xembench.scripts.train_expert_ppo --config configs/presets/linux_gpu_smoke.yaml
+# Machine:  LINUX 5090 ONLY | Runtime: ~5-10 min
+task: pick_cube_arm     # arm task learns fastest; good burn-in signal
+out_dir: data/checkpoints/linux_gpu_smoke
+num_envs: 256
+num_steps: 32
+total_timesteps: 500000
+lr: 3.0e-4
+gamma: 0.9
+gae_lambda: 0.9
+clip_coef: 0.2
+ent_coef: 0.0
+vf_coef: 0.5
+max_grad_norm: 0.5
+update_epochs: 4
+num_minibatches: 16
+reward_mode: dense
+hidden: 256
+device: auto
+log_every: 1

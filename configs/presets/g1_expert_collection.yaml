@@ -1,0 +1,13 @@
+# PRESET: roll the trained G1 expert in rgb mode -> 200 success-filtered demos.
+# Consumer: python -m xembench.scripts.collect_demos --config configs/presets/g1_expert_collection.yaml \
+#             --set policy=ppo:data/checkpoints/expert_apple_bowl_g1_seed0/best.pt
+# Machine:  Linux recommended (CPU-sim ok but slow) | Runtime: ~1 h
+# Note:     env runs obs_mode='state_dict+rgb' so the expert sees the exact
+#           obs_mode='state' flattening it was trained on.
+task: apple_bowl_g1
+policy: ppo:data/checkpoints/expert_apple_bowl_g1_seed0/best.pt
+episodes: 200
+source: ppo_expert      # -> data/demos/g1/UnitreeG1PlaceAppleInBowl-v1/ppo_expert.h5
+success_only: true
+max_attempts: 2000      # tolerate <100% expert success
+out: null

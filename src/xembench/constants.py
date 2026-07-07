@@ -31,6 +31,20 @@ CANON_ACTION_SLOTS = {
     "head": slice(19, 21),
 }
 
+
+def _canon_dim_names() -> list[str]:
+    names = [""] * A_CANON
+    for slot, sl in CANON_ACTION_SLOTS.items():
+        for i, dim in enumerate(range(sl.start, sl.stop)):
+            names[dim] = f"{slot}_{i}"
+    assert all(names), "CANON_ACTION_SLOTS must partition all A_CANON dims"
+    return names
+
+
+# Per-dimension names derived from the slots (kept programmatic so docs,
+# tests, and analysis tooling can never drift from the layout above).
+CANON_ACTION_DIM_NAMES = _canon_dim_names()
+
 # ---------------------------------------------------------------------------
 # Canonical proprio: qpos then qvel, each laid out mirroring the action slots
 # (21 + 21 = 42 used dims), zero-padded to P_CANON with a validity mask.

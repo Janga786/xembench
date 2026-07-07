@@ -1,0 +1,24 @@
+# PRESET: G1 flat-state PPO expert on dense reward — B2, the schedule-risk item.
+# Consumer: python -m xembench.scripts.train_expert_ppo --config configs/presets/g1_expert_train.yaml \
+#             --set task=apple_bowl_g1     (then task=transport_box_g1)
+# Machine:  Linux 5090 ONLY (num_envs=2048 GPU sim) | Runtime: ~1-3 h/task
+# Gate:     >=70% success on apple_bowl_g1 before collecting demos; if it stalls,
+#           try gamma 0.8, lr 1e-4, or reduced init randomization before giving up.
+task: apple_bowl_g1
+out_dir: null           # default: data/checkpoints/expert_{task}_seed{seed}
+num_envs: 2048
+num_steps: 16
+total_timesteps: 30000000
+lr: 3.0e-4
+gamma: 0.9
+gae_lambda: 0.9
+clip_coef: 0.2
+ent_coef: 0.0
+vf_coef: 0.5
+max_grad_norm: 0.5
+update_epochs: 8
+num_minibatches: 32
+reward_mode: dense
+hidden: 256
+device: auto
+log_every: 1

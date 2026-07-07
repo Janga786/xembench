@@ -1,0 +1,20 @@
+# PRESET: quick BC sanity run on whatever demos exist.
+# Consumer: python -m xembench.scripts.train_bc --config configs/presets/bc_train_small.yaml --set task=<task>
+# Machine:  Mac (MPS) or Linux | Runtime: minutes
+# Use for: verifying a new demo file trains at all / loss goes down.
+task: pick_cube_arm
+demos: []               # empty -> discover data/demos/{emb}/{env_id}/*.h5
+out_dir: null           # default: data/checkpoints/bc_{task}_seed{seed}
+vision: nature_cnn
+steps: 2000
+batch_size: 64
+lr: 3.0e-4
+val_fraction: 0.1
+eval_every: 250
+log_every: 50
+augment: true
+paraphrase_augment: true
+paraphrase_p: 0.7
+preload: true           # small runs: keep demos in RAM
+num_workers: 0
+device: auto

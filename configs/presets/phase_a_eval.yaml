@@ -1,0 +1,20 @@
+# PRESET: tiny Mac-safe eval — proves the eval matrix + transfer mechanism
+# end-to-end with whatever checkpoint exists. Success rates are meaningless
+# at this scale; this checks plumbing, not policies.
+# Consumer: python -m xembench.scripts.evaluate --config configs/presets/phase_a_eval.yaml \
+#             --set policies='[{type: bc, ckpt: "<path/best.pt>"}]'
+# Machine:  Mac or Linux | Runtime: minutes
+csv: data/results/eval_smoke.csv
+episodes_csv: data/results/eval_smoke_episodes.csv
+episodes_native: 3
+episodes_transfer: 2
+seeds: [0]
+vision: nature_cnn
+device: auto
+transfer: true
+instruction_conds: [canonical]
+color_conds: [train]
+tasks: [pick_cube_arm]
+policies:
+  - type: bc
+    ckpt: data/checkpoints/bc_overfit_check/best.pt
