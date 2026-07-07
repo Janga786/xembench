@@ -81,6 +81,8 @@ make test-sim              # integration tests, real envs on CPU sim (~10 s)
 make check                 # create all 6 envs, validate pinned constants
 make mac-check             # environment report (OS/torch/backends/ManiSkill)
 make toy-report            # analysis pipeline on labeled synthetic data
+make artifact-pack-toy     # full artifact pack from synthetic data (rehearses Phase B packaging)
+make artifact-pack-help    # how to pack real Phase B results
 make smoke                 # everything above chained + BC/PPO/eval smokes
 
 uv run python -m xembench.scripts.setup_check
@@ -122,6 +124,7 @@ reports/, outputs/, artifacts/   generated summaries / scratch / media (gitignor
 | training | `data/checkpoints/<run>/{best.pt,last.pt,config.yaml,tb/}` |
 | evaluation | `data/results/eval.csv` (aggregate) + `data/results/eval_episodes.csv` (per episode) + printed tables |
 | analysis | `reports/*.md`, `reports/*.csv` summaries |
+| artifact packer | `artifacts/releases/<name>/` — manifest, metrics, figures, project-page assets, checksums ([docs/artifact_packs.md](docs/artifact_packs.md)) |
 
 ## Interpreting results
 

@@ -43,4 +43,8 @@ jobs:
             tests/test_analysis.py \
             tests/test_paths.py \
             tests/test_demo_schema_validator.py \
-            tests/test_video_index.py
+            tests/test_video_index.py \
+            tests/test_episode_records.py \
+            tests/test_manifest.py \
+            tests/test_figures.py \
+            tests/test_build_pack.py

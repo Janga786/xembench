@@ -117,10 +117,19 @@ uv run python -m xembench.scripts.evaluate --config configs/presets/full_eval_ma
 Gate: every cell present; missing-checkpoint cells only for `optional`
 policies. Interrupted → fresh CSV names or prune partial rows (plan doc).
 
-### 14. Reports — seconds · Mac-safe: yes · output: reports/{summary,failures,transfer_matrix}.{md,csv}
+### 14. Reports + artifact pack — seconds · Mac-safe: yes · output: reports/*, artifacts/releases/phase_b_v1/
 ```bash
 uv run python scripts/make_report_assets.py --input data/results/eval_episodes.csv
+uv run python -m xembench.artifacts.build_pack \
+  --eval-csv data/results/eval_episodes.csv \
+  --out artifacts/releases/phase_b_v1 --release-name phase_b_v1 \
+  --configs configs/presets/full_eval_matrix.yaml --configs configs/tasks.yaml \
+  --videos artifacts/videos
 ```
+The pack bundles metrics, figures, manifest (git commit + env versions),
+config snapshots, video index, and project-page assets — the report is
+written FROM it (reports/templates/report_skeleton.md). Rehearsed on Mac
+by `make artifact-pack-toy`.
 
 ### 15. Videos — ~1 h · Linux recommended · output: artifacts/videos/raw/*.mp4 + INDEX.md
 Follow [demo_video_plan.md](demo_video_plan.md) (uses `episode_seed`s from

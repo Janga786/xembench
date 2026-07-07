@@ -1,6 +1,6 @@
 [project]
 name = "xembench"
-version = "0.2.0"
+version = "0.3.0"
 description = "X-Embodiment Language-Grounded Manipulation Benchmark: measuring language-conditioned policy transfer between a Franka Panda arm and a Unitree G1 humanoid upper body in ManiSkill3."
 readme = "README.md"
 requires-python = ">=3.10,<3.13"

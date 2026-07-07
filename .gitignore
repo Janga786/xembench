@@ -13,11 +13,13 @@ data/frames/
 runs/
 outputs/*
 !outputs/.gitkeep
+# artifact packs (artifacts/releases/) are regenerable: never committed
 artifacts/*
 !artifacts/videos/
 artifacts/videos/*
 !artifacts/videos/README.md
 !artifacts/videos/INDEX.md
+!artifacts/videos/INDEX.json
 !artifacts/videos/raw/
 artifacts/videos/raw/*
 !artifacts/videos/raw/.gitkeep

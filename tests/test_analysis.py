@@ -64,7 +64,7 @@ def _toy_df(tmp_path) -> pd.DataFrame:
 def test_loader_rejects_missing_columns(tmp_path):
     csv = tmp_path / "bad.csv"
     pd.DataFrame({"task": ["a"], "success": [1]}).to_csv(csv, index=False)
-    with pytest.raises(ValueError, match="missing columns"):
+    with pytest.raises(ValueError, match="missing core columns"):
         load_episodes(csv)
 
 

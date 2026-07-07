@@ -7,6 +7,7 @@ adapter) pair — nothing about the policy changes. num_envs=1 sequential
 episodes: exact and identical on CPU (Mac) and GPU (Linux) sim.
 """
 
+import time
 from dataclasses import asdict, dataclass, field
 
 import torch
@@ -49,12 +50,15 @@ def evaluate_policy(
     successes, steps_when_success, episode_records = 0, [], []
     for ep in range(n_episodes):
         episode_seed = seed0 + ep
+        t0 = time.perf_counter()
         obs, _ = wrapped_env.reset(seed=episode_seed)
-        success, was_truncated = False, True  # no break => budget exhausted
+        instruction = obs["instruction"][0] if "instruction" in obs else ""
+        success, was_truncated, return_sum = False, True, 0.0
         for t in range(max_steps):
             canon = policy(obs)
             native = adapter.to_native_action(canon)
             obs, reward, terminated, truncated, info = wrapped_env.step(native)
+            return_sum += float(torch.as_tensor(reward).reshape(-1)[0])
             success = bool(torch.as_tensor(info["success"]).reshape(-1)[0])
             if bool(torch.as_tensor(terminated).reshape(-1)[0]) or bool(
                 torch.as_tensor(truncated).reshape(-1)[0]
@@ -72,6 +76,10 @@ def evaluate_policy(
             steps=steps,
             max_steps=max_steps,
             failure_type=classify_episode(success, was_truncated),
+            # schema-v2 optional fields (analysis/episodes.py)
+            instruction=instruction,
+            return_sum=round(return_sum, 6),
+            elapsed_s=round(time.perf_counter() - t0, 3),
         ))
 
     lo, hi = wilson_ci(successes, n_episodes)

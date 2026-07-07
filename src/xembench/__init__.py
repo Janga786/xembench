@@ -8,7 +8,7 @@ simulated in ManiSkill3.
 import os
 import platform
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 # macOS: SAPIEN bundles a Vulkan loader but no ICD. Point the loader at
 # Homebrew's MoltenVK so rendering works. Must happen before sapien import,

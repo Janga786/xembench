@@ -98,7 +98,8 @@ def run_matrix(cfg: dict) -> dict[str, list[dict]]:
                               f"{instr}/{color} seed{seed}")
                         identity = base | dict(
                             eval_task=task_name, eval_embodiment=task["embodiment"],
-                            instruction_cond=instr, color_cond=color)
+                            instruction_cond=instr, color_cond=color,
+                            template_family=task["family"])
                         r, eps = _eval_cell(policy_fn, task, cfg["episodes_native"],
                                             instr, color, seed, identity)
                         rows.append(identity | r)
@@ -112,7 +113,8 @@ def run_matrix(cfg: dict) -> dict[str, list[dict]]:
                           f"(transfer) seed{seed}")
                     identity = base | dict(
                         eval_task=ptask_name, eval_embodiment=ptask["embodiment"],
-                        instruction_cond="canonical", color_cond="train")
+                        instruction_cond="canonical", color_cond="train",
+                        template_family=ptask["family"])
                     r, eps = _eval_cell(policy_fn, ptask, cfg["episodes_transfer"],
                                         "canonical", "train", seed, identity)
                     rows.append(identity | r)

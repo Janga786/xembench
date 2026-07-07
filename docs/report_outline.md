@@ -58,6 +58,12 @@ is a claim. Numbers only exist after Phase B (Linux) runs.
   retention ratio, paraphrase/color deltas, steps-to-success, failure
   distribution; the negative-transfer reference definition.
 
+> Filling in sections 5–7: build an artifact pack
+> (`docs/artifact_packs.md`), then follow
+> `reports/templates/report_skeleton.md` +
+> `docs/how_to_write_results_section.md` — every table/figure below has a
+> generated counterpart in the pack.
+
 ## 5. Results — ALL TBD (Phase B)
 - Table 1: native SRs per task × policy (orig vs paraphrased vs unseen).
 - Table 2: transfer matrix — native vs transfer SR + drop, both directions

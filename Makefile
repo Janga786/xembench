@@ -12,7 +12,8 @@ SLICE := data/demos/panda/PickCube-v1/hf_replay_check.h5
 SLOTS := {"color": "red", "object": "cube", "relation": "on", "receptacle": "green target"}
 
 .PHONY: check test test-sim data-slice bc-smoke eval-smoke ppo-smoke smoke clean-smoke \
-        mac-check toy-report video-index phase-b-help docs
+        mac-check toy-report video-index phase-b-help docs \
+        artifact-pack-toy artifact-pack-help
 
 check:
 	uv run python -m xembench.scripts.setup_check
@@ -33,6 +34,21 @@ toy-report:
 
 video-index:
 	uv run python -m xembench.analysis.video_index
+
+# Full artifact pack from deterministic SYNTHETIC data (loudly labeled) —
+# proves the Phase B packaging path end to end on any machine.
+artifact-pack-toy:
+	uv run python -m xembench.scripts.generate_toy_results
+	uv run python -m xembench.artifacts.build_pack \
+	  --eval-csv outputs/toy/eval_episodes.csv \
+	  --out artifacts/releases/toy_pack --release-name toy_pack \
+	  --synthetic --overwrite \
+	  --configs configs/tasks.yaml --configs configs/presets/full_eval_matrix.yaml \
+	  --videos artifacts/videos \
+	  --notes "deterministic toy pack from make artifact-pack-toy"
+
+artifact-pack-help:
+	@cat docs/artifact_packs.md
 
 phase-b-help:
 	@cat docs/phase_b_commands.md

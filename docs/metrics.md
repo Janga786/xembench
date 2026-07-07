@@ -24,7 +24,12 @@ Phase B produces them; everything here defines how they will be computed.
 
 ## Per-episode CSV — `data/results/eval_episodes.csv` (one row per episode)
 
-Schema owned by `xembench.analysis.episodes` (`EPISODE_COLUMNS`):
+Schema owned by `xembench.analysis.episodes` (**schema v2**; core columns are
+v1-stable, optional columns default-fill on read AND write, so v1 CSVs load
+unchanged — that is the whole migration story. Validate single records
+before writing with `validate_episode_record`).
+
+Core columns (v1, never reordered/removed):
 
 | Column | Meaning |
 |---|---|
@@ -35,6 +40,18 @@ Schema owned by `xembench.analysis.episodes` (`EPISODE_COLUMNS`):
 | `steps` | env steps executed this episode |
 | `max_steps` | episode budget |
 | `failure_type` | one of the taxonomy labels below |
+
+Optional columns (v2 — recorded by the runner where cheap, blank/NaN
+otherwise):
+
+| Column | Meaning |
+|---|---|
+| `instruction` | exact (possibly paraphrased) text the policy received |
+| `template_family` | instruction family from the task registry |
+| `return_sum` | episode reward sum (interpret against the env's reward mode) |
+| `elapsed_s` | wall-clock seconds for the episode |
+| `video_path` | recorded rollout if any (repo-relative; Phase B recording hook) |
+| `config_path` | eval config snapshot if any (repo-relative) |
 
 ## Failure taxonomy (`xembench.analysis.taxonomy`)
 
