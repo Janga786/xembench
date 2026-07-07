@@ -47,17 +47,20 @@ def _load_policy(ckpt: str, vision: str, device) -> BCPolicy:
 
 
 def _eval_cell(policy_fn, task: dict, episodes: int, instruction_cond: str,
-               color_cond: str, seed: int) -> dict:
+               color_cond: str, seed: int, identity: dict) -> tuple[dict, list[dict]]:
+    """-> (aggregate row fields, per-episode rows stamped with cell identity)."""
     wrapped, adapter = _make_wrapped(task, instruction_cond, color_cond, seed)
     result = evaluate_policy(
         policy_fn, wrapped, adapter, n_episodes=episodes,
         max_steps=task["max_steps"], seed0=100_000 * (seed + 1),
     )
     wrapped.close()
-    return result.to_dict()
+    episode_rows = [identity | rec for rec in result.episodes]
+    return result.to_dict(), episode_rows
 
 
-def run_matrix(cfg: dict) -> list[dict]:
+def run_matrix(cfg: dict) -> dict[str, list[dict]]:
+    """-> {"cells": aggregate rows, "episodes": per-episode rows}."""
     registry = load_yaml(repo_root() / "configs" / "tasks.yaml")
     tasks = registry["tasks"]
     pairs = registry["transfer_pairs"]
@@ -67,6 +70,7 @@ def run_matrix(cfg: dict) -> list[dict]:
 
     device = auto_device(cfg.get("device", "auto"))
     rows: list[dict] = []
+    episode_rows: list[dict] = []
 
     for spec in cfg["policies"]:
         for task_name in cfg["tasks"]:
@@ -92,11 +96,13 @@ def run_matrix(cfg: dict) -> list[dict]:
                     for color in color_conds:
                         print(f"[eval] {spec['type']} {task_name} native "
                               f"{instr}/{color} seed{seed}")
-                        r = _eval_cell(policy_fn, task, cfg["episodes_native"],
-                                       instr, color, seed)
-                        rows.append(base | dict(
+                        identity = base | dict(
                             eval_task=task_name, eval_embodiment=task["embodiment"],
-                            instruction_cond=instr, color_cond=color) | r)
+                            instruction_cond=instr, color_cond=color)
+                        r, eps = _eval_cell(policy_fn, task, cfg["episodes_native"],
+                                            instr, color, seed, identity)
+                        rows.append(identity | r)
+                        episode_rows += eps
 
                 # transfer cell
                 if cfg.get("transfer", True) and task_name in partner:
@@ -104,9 +110,11 @@ def run_matrix(cfg: dict) -> list[dict]:
                     ptask = tasks[ptask_name]
                     print(f"[eval] {spec['type']} {task_name} -> {ptask_name} "
                           f"(transfer) seed{seed}")
-                    r = _eval_cell(policy_fn, ptask, cfg["episodes_transfer"],
-                                   "canonical", "train", seed)
-                    rows.append(base | dict(
+                    identity = base | dict(
                         eval_task=ptask_name, eval_embodiment=ptask["embodiment"],
-                        instruction_cond="canonical", color_cond="train") | r)
-    return rows
+                        instruction_cond="canonical", color_cond="train")
+                    r, eps = _eval_cell(policy_fn, ptask, cfg["episodes_transfer"],
+                                        "canonical", "train", seed, identity)
+                    rows.append(identity | r)
+                    episode_rows += eps
+    return {"cells": rows, "episodes": episode_rows}

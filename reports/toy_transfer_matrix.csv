@@ -1,0 +1,3 @@
+policy_type,task,instruction_cond,color_cond,eval_task,train_embodiment,eval_embodiment,n_native,sr_native,native_ci_low,native_ci_high,n_transfer,sr_transfer,transfer_ci_low,transfer_ci_high,drop,retention
+bc,apple_bowl_g1,canonical,train,pick_cube_arm,g1,panda,40,0.7,0.545696893456796,0.8192532908430471,40,0.25,0.14186967895549518,0.40194259066970106,0.44999999999999996,0.35714285714285715
+bc,pick_cube_arm,canonical,train,apple_bowl_g1,panda,g1,40,0.8,0.6524239261814333,0.8950013502683314,40,0.3,0.18074670915695296,0.454303106543204,0.5,0.37499999999999994

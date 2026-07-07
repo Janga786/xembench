@@ -7,12 +7,15 @@ adapter) pair — nothing about the policy changes. num_envs=1 sequential
 episodes: exact and identical on CPU (Mac) and GPU (Linux) sim.
 """
 
-import math
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 
 import torch
 
+from xembench.analysis.stats import wilson_ci
+from xembench.analysis.taxonomy import classify_episode
 from xembench.embodiment.base import EmbodimentAdapter
+
+__all__ = ["EvalResult", "evaluate_policy", "bc_policy_fn", "wilson_ci"]
 
 
 @dataclass
@@ -24,19 +27,14 @@ class EvalResult:
     ci_high: float
     avg_steps_to_success: float  # successes only; nan if none
     avg_steps_frac: float        # steps / max_steps, comparable across tasks
+    # per-episode records for failure analysis; excluded from to_dict so the
+    # aggregate CSV schema is unchanged
+    episodes: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
-        return asdict(self)
-
-
-def wilson_ci(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
-    if n == 0:
-        return 0.0, 1.0
-    p = k / n
-    denom = 1 + z**2 / n
-    center = (p + z**2 / (2 * n)) / denom
-    half = z * math.sqrt(p * (1 - p) / n + z**2 / (4 * n**2)) / denom
-    return max(0.0, center - half), min(1.0, center + half)
+        d = asdict(self)
+        d.pop("episodes")
+        return d
 
 
 @torch.no_grad()
@@ -48,10 +46,11 @@ def evaluate_policy(
     max_steps: int,
     seed0: int = 10_000,
 ) -> EvalResult:
-    successes, steps_when_success = 0, []
+    successes, steps_when_success, episode_records = 0, [], []
     for ep in range(n_episodes):
-        obs, _ = wrapped_env.reset(seed=seed0 + ep)
-        success = False
+        episode_seed = seed0 + ep
+        obs, _ = wrapped_env.reset(seed=episode_seed)
+        success, was_truncated = False, True  # no break => budget exhausted
         for t in range(max_steps):
             canon = policy(obs)
             native = adapter.to_native_action(canon)
@@ -60,10 +59,20 @@ def evaluate_policy(
             if bool(torch.as_tensor(terminated).reshape(-1)[0]) or bool(
                 torch.as_tensor(truncated).reshape(-1)[0]
             ):
+                was_truncated = bool(torch.as_tensor(truncated).reshape(-1)[0])
                 break
+        steps = t + 1
         if success:
             successes += 1
-            steps_when_success.append(t + 1)
+            steps_when_success.append(steps)
+        episode_records.append(dict(
+            episode_idx=ep,
+            episode_seed=episode_seed,
+            success=int(success),
+            steps=steps,
+            max_steps=max_steps,
+            failure_type=classify_episode(success, was_truncated),
+        ))
 
     lo, hi = wilson_ci(successes, n_episodes)
     mean_steps = (
@@ -78,6 +87,7 @@ def evaluate_policy(
         ci_high=hi,
         avg_steps_to_success=mean_steps,
         avg_steps_frac=mean_steps / max_steps if steps_when_success else float("nan"),
+        episodes=episode_records,
     )
 
 

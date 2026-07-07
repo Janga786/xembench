@@ -1,5 +1,6 @@
 # Full evaluation grid (Linux, B5). Mac smoke overrides tasks/episodes.
 csv: data/results/eval.csv
+episodes_csv: data/results/eval_episodes.csv   # per-episode records for failure analysis (omit/null to skip)
 episodes_native: 100
 episodes_transfer: 50
 seeds: [0]

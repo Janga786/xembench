@@ -1,0 +1,42 @@
+# Failure breakdown
+
+Source: `outputs/toy/eval_episodes.csv` — 240 episodes, 110 failures.
+
+Labels beyond success/timeout/unknown_failure/simulator_error require Phase B instrumentation (see docs/metrics.md); their absence in real runs is expected for now.
+
+## By evaluation task
+
+| eval_task     |   grasp_failure |   object_dropped |   reach_failure |   success |   timeout |   wrong_object_selected |   total |
+|:--------------|----------------:|-----------------:|----------------:|----------:|----------:|------------------------:|--------:|
+| apple_bowl_g1 |               5 |               13 |               6 |        40 |         8 |                       8 |      80 |
+| pick_cube_arm |              10 |               13 |              14 |        90 |        17 |                      16 |     160 |
+
+## By evaluation embodiment
+
+| eval_embodiment   |   grasp_failure |   object_dropped |   reach_failure |   success |   timeout |   wrong_object_selected |   total |
+|:------------------|----------------:|-----------------:|----------------:|----------:|----------:|------------------------:|--------:|
+| g1                |               5 |               13 |               6 |        40 |         8 |                       8 |      80 |
+| panda             |              10 |               13 |              14 |        90 |        17 |                      16 |     160 |
+
+## By policy
+
+| policy_type   |   grasp_failure |   object_dropped |   reach_failure |   success |   timeout |   wrong_object_selected |   total |
+|:--------------|----------------:|-----------------:|----------------:|----------:|----------:|------------------------:|--------:|
+| bc            |              15 |               26 |              20 |       130 |        25 |                      24 |     240 |
+
+## By instruction / color split
+
+| instruction_cond   | color_cond   |   grasp_failure |   object_dropped |   reach_failure |   success |   timeout |   wrong_object_selected |   total |
+|:-------------------|:-------------|----------------:|-----------------:|----------------:|----------:|----------:|------------------------:|--------:|
+| canonical          | train        |               8 |               20 |              13 |        82 |        20 |                      17 |     160 |
+| canonical          | unseen       |               4 |                3 |               5 |        22 |         4 |                       2 |      40 |
+| heldout            | train        |               3 |                3 |               2 |        26 |         1 |                       5 |      40 |
+
+## By train -> eval embodiment
+
+| train_embodiment   | eval_embodiment   |   grasp_failure |   object_dropped |   reach_failure |   success |   timeout |   wrong_object_selected |   total |
+|:-------------------|:------------------|----------------:|-----------------:|----------------:|----------:|----------:|------------------------:|--------:|
+| g1                 | g1                |               3 |                6 |               0 |        28 |         2 |                       1 |      40 |
+| g1                 | panda             |               2 |                6 |               7 |        10 |         9 |                       6 |      40 |
+| panda              | g1                |               2 |                7 |               6 |        12 |         6 |                       7 |      40 |
+| panda              | panda             |               8 |                7 |               7 |        80 |         8 |                      10 |     120 |

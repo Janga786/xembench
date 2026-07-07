@@ -1,0 +1,14 @@
+# Evaluation summary
+
+Source: `outputs/toy/eval_episodes.csv` — 240 episodes, 80 of them cross-embodiment transfer.
+
+| policy_type   | task          | eval_task     | eval_embodiment   | instruction_cond   | color_cond   |   n_episodes | success       |   steps | top_failure                                                |
+|:--------------|:--------------|:--------------|:------------------|:-------------------|:-------------|-------------:|:--------------|--------:|:-----------------------------------------------------------|
+| bc            | apple_bowl_g1 | apple_bowl_g1 | g1                | canonical          | train        |           40 | 70% [55%,82%] |      32 | object_dropped:6; grasp_failure:3; timeout:2               |
+| bc            | apple_bowl_g1 | pick_cube_arm | panda             | canonical          | train        |           40 | 25% [14%,40%] |      17 | timeout:9; reach_failure:7; wrong_object_selected:6        |
+| bc            | pick_cube_arm | apple_bowl_g1 | g1                | canonical          | train        |           40 | 30% [18%,45%] |      33 | object_dropped:7; wrong_object_selected:7; timeout:6       |
+| bc            | pick_cube_arm | pick_cube_arm | panda             | canonical          | train        |           40 | 80% [65%,90%] |      17 | timeout:3; wrong_object_selected:3; object_dropped:1       |
+| bc            | pick_cube_arm | pick_cube_arm | panda             | canonical          | unseen       |           40 | 55% [40%,69%] |      17 | reach_failure:5; grasp_failure:4; timeout:4                |
+| bc            | pick_cube_arm | pick_cube_arm | panda             | heldout            | train        |           40 | 65% [50%,78%] |      18 | wrong_object_selected:5; object_dropped:3; grasp_failure:3 |
+
+Columns: `task` = training task, `eval_task` = where evaluated (differing values = transfer cell); success shows a 95% Wilson CI; `steps` averages successful episodes only. See docs/metrics.md for formulas.
