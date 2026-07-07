@@ -15,8 +15,11 @@ def auto_device(requested: str = "auto") -> torch.device:
 
 
 def to_device(batch: dict, device: torch.device) -> dict:
+    # non_blocking copies are only safe with CUDA pinned-memory semantics;
+    # on MPS they race with numpy-backed source buffers and deliver garbage.
+    nb = device.type == "cuda"
     return {
-        k: (v.to(device, non_blocking=True) if torch.is_tensor(v) else v)
+        k: (v.to(device, non_blocking=nb) if torch.is_tensor(v) else v)
         for k, v in batch.items()
     }
 
