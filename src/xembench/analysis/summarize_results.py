@@ -71,8 +71,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", required=True, help="markdown output path")
     args = parser.parse_args(argv)
 
+    from xembench.utils.config import sanitize_path
+
     df = load_episodes(args.input)
-    report = to_markdown(summarize(df), df, args.input)
+    report = to_markdown(summarize(df), df, sanitize_path(args.input))
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(report)

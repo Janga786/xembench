@@ -147,7 +147,10 @@ rates by design (tiny data/training) — they verify plumbing, not policies.
 [Phase B plan](docs/phase_b_linux_plan.md) ·
 [Phase B commands](docs/phase_b_commands.md) ·
 [report outline](docs/report_outline.md) ·
-[project page](docs/project_page.md) · [CONTRIBUTING](CONTRIBUTING.md)
+[project page](docs/project_page.md) · [roadmap](docs/roadmap.md) ·
+[references](docs/references.md) ·
+[application summary](docs/application_summary.md) ·
+[CONTRIBUTING](CONTRIBUTING.md)
 
 ## Current limitations
 

@@ -108,8 +108,10 @@ def to_json(entries: list[VideoEntry], root: Path) -> dict:
 
 
 def to_markdown(entries: list[VideoEntry], root: Path) -> str:
+    from xembench.utils.config import sanitize_path
+
     lines = ["# Video index", "",
-             f"{len(entries)} videos under `{root}` "
+             f"{len(entries)} videos under `{sanitize_path(root)}` "
              "(regenerate: `python -m xembench.analysis.video_index`).", ""]
     if not entries:
         lines.append("_No videos yet — Phase B produces them "

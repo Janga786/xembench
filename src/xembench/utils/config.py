@@ -89,3 +89,16 @@ def resolve_path(p: str | Path) -> str:
     boundary must be absolute."""
     p = Path(p)
     return str(p if p.is_absolute() else repo_root() / p)
+
+
+def sanitize_path(p: str | Path) -> str:
+    """Strip user-identifying prefixes so paths embedded in COMMITTED or
+    SHARED artifacts (reports, manifests, indexes) never leak home dirs:
+    repo-relative where possible, ~-relative otherwise."""
+    s = str(p)
+    root, home = str(repo_root()), str(Path.home())
+    if s.startswith(root):
+        return s[len(root):].lstrip("/") or "."
+    if s.startswith(home):
+        return "~" + s[len(home):]
+    return s

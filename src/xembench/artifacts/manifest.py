@@ -13,7 +13,9 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from xembench.utils.config import repo_root
+from xembench.utils.config import repo_root, sanitize_path  # noqa: F401
+# sanitize_path re-exported: it moved to utils.config so analysis-layer
+# report generators can use it without importing the artifacts layer.
 
 MANIFEST_SCHEMA_VERSION = 1
 
@@ -22,18 +24,6 @@ SYNTHETIC_WARNING = (
     "labeled synthetic inputs to exercise the pipeline. Nothing here is an "
     "experimental result."
 )
-
-
-def sanitize_path(p: str | Path) -> str:
-    """Strip user-identifying prefixes so manifests are shareable:
-    repo-relative where possible, ~-relative otherwise."""
-    s = str(p)
-    root, home = str(repo_root()), str(Path.home())
-    if s.startswith(root):
-        return s[len(root):].lstrip("/") or "."
-    if s.startswith(home):
-        return "~" + s[len(home):]
-    return s
 
 
 def git_state() -> tuple[str, bool]:
