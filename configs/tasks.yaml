@@ -1,0 +1,51 @@
+# Benchmark task registry: the single source of truth for env IDs, embodiments,
+# cameras, and transfer pairings. All scripts key tasks by the names below.
+
+tasks:
+  pick_cube_arm:
+    env_id: PickCubeLang-v1
+    embodiment: panda
+    family: pick_place
+    camera: base_camera
+    max_steps: 50
+    demo_source: motion_planning   # mplib -> Linux only
+  stack_cube_arm:
+    env_id: StackCubeLang-v1
+    embodiment: panda
+    family: stack
+    camera: base_camera
+    max_steps: 50
+    demo_source: motion_planning
+  push_t_arm:
+    env_id: PushT-v1
+    embodiment: panda_stick        # 7-dim action, no gripper
+    family: tool_push
+    camera: base_camera
+    max_steps: 100
+    demo_source: hf_replay         # prebuilt ManiSkill demos on HuggingFace
+  pull_tool_arm:
+    env_id: PullCubeTool-v1
+    embodiment: panda
+    family: tool_pull
+    camera: base_camera
+    max_steps: 100
+    demo_source: hf_replay
+  apple_bowl_g1:
+    env_id: UnitreeG1PlaceAppleInBowl-v1
+    embodiment: g1
+    family: pick_place
+    camera: head_camera            # egocentric; base_camera exists for ablation
+    max_steps: 100
+    demo_source: ppo_expert        # no prebuilt demos for G1
+  transport_box_g1:
+    env_id: UnitreeG1TransportBox-v1
+    embodiment: g1
+    family: transport
+    camera: head_camera
+    max_steps: 100
+    demo_source: ppo_expert
+
+# Cross-embodiment transfer evaluation pairs (same instruction family).
+transfer_pairs:
+  - {a: pick_cube_arm, b: apple_bowl_g1, primary: true}
+  - {a: stack_cube_arm, b: transport_box_g1, primary: false}
