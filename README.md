@@ -1,8 +1,9 @@
 # xembench — X-Embodiment Language-Grounded Manipulation Benchmark
 
-**Status: Phase A complete (pipeline built + smoke-verified on macOS). Phase B
-(actual training + benchmark numbers) pending — requires the Linux / RTX 5090
-machine. No benchmark results exist yet; nothing in this repo claims any.**
+**Status: Phase A.5 complete — pipeline built, smoke-verified, documented,
+and hardened on macOS (v0.2). Phase B (actual training + benchmark numbers)
+pending — requires the Linux / RTX 5090 machine. No benchmark results exist
+yet; nothing in this repo claims any.**
 
 ## Thesis
 
@@ -167,7 +168,7 @@ cite this repository:
   title  = {xembench: An X-Embodiment Language-Grounded Manipulation Benchmark},
   author = {Jangara},
   year   = {2026},
-  note   = {https://github.com/USER/xembench (private; Phase A)}
+  note   = {https://github.com/Janga786/xembench (Phase A.5, pre-results)}
 }
 ```
 

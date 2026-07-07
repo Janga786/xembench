@@ -1,5 +1,10 @@
 # Phase A status (audited 2026-07-07, macOS)
 
+> Update, same day: the Phase A.5 polish pass this snapshot preceded is now
+> complete (v0.2) — docs set, config presets, analysis tooling with
+> per-episode records, 75 fast + 5 sim tests, CI, and the Phase B runbook
+> (docs/phase_b_commands.md). Phase B remains pending Linux.
+
 Snapshot of what exists, what was verified, and how — recorded before the
 Phase A.5 polish pass. Nothing in this file is a claimed research result;
 success rates from smoke runs are meaningless by design (tiny data, tiny

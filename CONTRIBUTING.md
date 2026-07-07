@@ -58,5 +58,4 @@ long episodes.
 3. New behavior documented (docs/ is part of the deliverable).
 4. No fabricated numbers anywhere — synthetic data must be labeled
    (see `generate_toy_results` / `toy_banner`).
-5. Commit messages state what changed and why; end with the co-author
-   trailer if applicable.
+5. Commit messages state what changed and why.

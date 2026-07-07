@@ -80,6 +80,7 @@ mode once known.]
 
 ## Status
 
-Phase A (full pipeline, smoke-verified end to end on macOS) complete.
+Phase A.5 complete (v0.2): full pipeline smoke-verified end to end on
+macOS, plus documentation, analysis tooling, and test hardening.
 Phase B (demo collection, training, and the actual benchmark numbers on an
 RTX 5090) pending. This page fills in as results land.
