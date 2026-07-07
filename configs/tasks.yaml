@@ -23,6 +23,7 @@ tasks:
     camera: base_camera
     max_steps: 100
     demo_source: hf_replay         # prebuilt ManiSkill demos on HuggingFace
+    slots: {}                      # fixed scene: gray tee, red target
   pull_tool_arm:
     env_id: PullCubeTool-v1
     embodiment: panda
@@ -30,6 +31,7 @@ tasks:
     camera: base_camera
     max_steps: 100
     demo_source: hf_replay
+    slots: {color: blue, object: cube}
   apple_bowl_g1:
     env_id: UnitreeG1PlaceAppleInBowl-v1
     embodiment: g1
@@ -37,6 +39,7 @@ tasks:
     camera: head_camera            # egocentric; base_camera exists for ablation
     max_steps: 100
     demo_source: ppo_expert        # no prebuilt demos for G1
+    slots: {color: red, object: apple, relation: in, receptacle: bowl}
   transport_box_g1:
     env_id: UnitreeG1TransportBox-v1
     embodiment: g1
@@ -44,6 +47,7 @@ tasks:
     camera: head_camera
     max_steps: 100
     demo_source: ppo_expert
+    slots: {}
 
 # Cross-embodiment transfer evaluation pairs (same instruction family).
 transfer_pairs:
