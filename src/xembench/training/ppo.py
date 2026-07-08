@@ -32,7 +32,12 @@ from xembench.envs.wrappers import UnifiedObsWrapper
 from xembench.language.tokenizer import get_tokenizer
 from xembench.models.ac_policy import StateActorCritic, VisualActorCritic
 from xembench.models.bc_policy import BCPolicy
-from xembench.utils.config import dump_run_config, load_yaml, repo_root
+from xembench.utils.config import (
+    dump_run_config,
+    load_yaml,
+    repo_root,
+    resolve_path,
+)
 
 
 # --------------------------------------------------------------------------
@@ -147,6 +152,16 @@ def train_ppo_state(cfg: dict) -> Path:
     T = cfg["num_steps"]
 
     agent = StateActorCritic(state_dim, action_dim, hidden=cfg.get("hidden", 256)).to(device)
+    if cfg.get("init_ckpt"):
+        # warm start (recorded in the run's config.yaml): continue training an
+        # earlier expert instead of re-exploring from scratch
+        ckpt = torch.load(resolve_path(cfg["init_ckpt"]), map_location=device,
+                          weights_only=True)
+        assert ckpt["state_dim"] == state_dim and ckpt["action_dim"] == action_dim, (
+            f"init_ckpt dims {ckpt['state_dim']}/{ckpt['action_dim']} != "
+            f"env {state_dim}/{action_dim}")
+        agent.load_state_dict(ckpt["model"])
+        print(f"warm start from {cfg['init_ckpt']}")
     optimizer = torch.optim.Adam(agent.parameters(), lr=cfg["lr"], eps=1e-5)
 
     buf_obs = torch.zeros(T, N, state_dim, device=device)
