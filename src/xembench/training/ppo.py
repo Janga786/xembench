@@ -101,7 +101,13 @@ class _BatchFn:
 
 
 def _episode_stats(infos, device):
-    """Collect success/return stats from ManiSkillVectorEnv final_info."""
+    """Per-episode success outcomes (0/1 tensor) from ManiSkillVectorEnv
+    final_info. Returns one entry per episode that ended this step so the
+    update-level stat can weight every episode equally — successes terminate
+    early in small groups while failures truncate together at the horizon,
+    so averaging per-step means would let a 2-env step count as much as the
+    full-batch truncation step (this skewed both the printed success rate
+    and best.pt selection)."""
     if "final_info" not in infos:
         return None
     fi = infos["final_info"]
@@ -110,7 +116,7 @@ def _episode_stats(infos, device):
         succ = fi.get("success")
         if succ is not None:
             mask = torch.as_tensor(mask, device=succ.device)
-            return succ[mask].float().mean().item() if mask.any() else None
+            return succ[mask].float() if mask.any() else None
     return None
 
 
@@ -198,7 +204,8 @@ def train_ppo_state(cfg: dict) -> Path:
             cfg["ent_coef"], cfg["vf_coef"], cfg["max_grad_norm"],
         )
 
-        sr = sum(success_rates) / len(success_rates) if success_rates else float("nan")
+        sr = (torch.cat(success_rates).mean().item()
+              if success_rates else float("nan"))
         if update % cfg.get("log_every", 1) == 0:
             sps = int(global_step / (time.time() - start))
             print(f"update {update}/{n_updates} step {global_step} "
@@ -332,7 +339,8 @@ def train_ppo_visual(cfg: dict) -> Path:
             extra_loss_fn=bc_reg,
         )
 
-        sr = sum(success_rates) / len(success_rates) if success_rates else float("nan")
+        sr = (torch.cat(success_rates).mean().item()
+              if success_rates else float("nan"))
         print(f"update {update}/{n_updates} step {global_step} success {sr:.2%} "
               f"kl {stats['approx_kl']:.4f} bc_reg {stats.get('bc_reg', 0):.4f}")
         writer.add_scalar("charts/success_rate", sr, global_step)
