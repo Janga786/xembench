@@ -22,3 +22,12 @@ reward_mode: dense
 hidden: 256
 device: auto
 log_every: 1
+env_kwargs:
+  sim_config:
+    gpu_memory_config:
+      # The 2048-env G1 scene overflows the PhysX GPU collision stack — SAPIEN
+      # logs a critical "collisionStackSize buffer overflow" and silently
+      # drops contacts. The demand scales with live contact count (observed
+      # asks: 8.1M with default 4.2M, then 28.6M once random-policy contact
+      # chatter ramped), so give it 128MB of headroom.
+      collision_stack_size: 134217728
