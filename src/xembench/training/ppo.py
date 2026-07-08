@@ -62,13 +62,18 @@ def compute_gae(rewards, values, dones, next_value, next_done, gamma, lam):
 
 
 def ppo_update(agent, optimizer, batch_fn, n_minibatches, epochs, clip_coef,
-               ent_coef, vf_coef, max_grad_norm, extra_loss_fn=None):
+               ent_coef, vf_coef, max_grad_norm, extra_loss_fn=None,
+               target_kl=None):
     """batch_fn(mb_idx) -> (logprob_new, entropy, value_new, logprob_old,
-    advantage, return_). extra_loss_fn(mb_idx) -> scalar (e.g. BC reg)."""
+    advantage, return_). extra_loss_fn(mb_idx) -> scalar (e.g. BC reg).
+    target_kl: stop the epoch loop once the epoch-mean approx KL exceeds it —
+    staged success bonuses make the return scale jump when a policy starts
+    succeeding, and unbounded epochs then produce policy-wrecking KL spikes."""
     stats = {}
     idx_all = torch.randperm(batch_fn.batch_size, device=batch_fn.device)
     mb_size = batch_fn.batch_size // n_minibatches
     for _ in range(epochs):
+        epoch_kls = []
         for start in range(0, batch_fn.batch_size, mb_size):
             mb = idx_all[start:start + mb_size]
             newlogprob, entropy, newvalue, oldlogprob, adv, ret = batch_fn(mb)
@@ -91,8 +96,11 @@ def ppo_update(agent, optimizer, batch_fn, n_minibatches, epochs, clip_coef,
                 max_grad_norm,
             )
             optimizer.step()
+            epoch_kls.append(float(((ratio - 1) - logratio).mean()))
             stats.update(pg_loss=float(pg), v_loss=float(v_loss), entropy=float(ent),
-                         approx_kl=float(((ratio - 1) - logratio).mean()))
+                         approx_kl=epoch_kls[-1])
+        if target_kl is not None and sum(epoch_kls) / len(epoch_kls) > target_kl:
+            break
     return stats
 
 
@@ -222,6 +230,7 @@ def train_ppo_state(cfg: dict) -> Path:
             agent, optimizer, _BatchFn(batch, T * N, device),
             cfg["num_minibatches"], cfg["update_epochs"], cfg["clip_coef"],
             cfg["ent_coef"], cfg["vf_coef"], cfg["max_grad_norm"],
+            target_kl=cfg.get("target_kl"),
         )
 
         sr = (sum(recent) / len(recent)
@@ -357,7 +366,7 @@ def train_ppo_visual(cfg: dict) -> Path:
             agent, optimizer, _BatchFn(batch, B, device),
             cfg["num_minibatches"], cfg["update_epochs"], cfg["clip_coef"],
             cfg["ent_coef"], cfg["vf_coef"], cfg["max_grad_norm"],
-            extra_loss_fn=bc_reg,
+            extra_loss_fn=bc_reg, target_kl=cfg.get("target_kl"),
         )
 
         sr = (sum(recent) / len(recent)
