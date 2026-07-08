@@ -57,6 +57,16 @@ artifacts/releases/<name>/
 - Missing inputs/configs fail loudly with the fix in the message.
 - Manifests contain no usernames/home paths (`sanitize_path`).
 
+## Flywheel packs (same rails, different contents)
+
+`python -m xembench.flywheel.build_flywheel_pack --round-manifest ...`
+packages a flywheel round (dataset card, validation report + quality-issue
+CSV, candidates, selection/collection plans, round comparison, model-card
+placeholder, index, eval CSVs) with the SAME safety rails as above:
+PackManifest provenance, checksums, sanitized paths, `--overwrite` guard,
+and refusal to package synthetic rounds without `--synthetic`. Rehearsal:
+`make flywheel-pack-toy`. Details: docs/physical_ai_data_flywheel.md.
+
 ## Using project_page_assets later
 
 `project_summary.md` is written to be pasted into a portfolio page (thesis,

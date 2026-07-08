@@ -61,3 +61,34 @@ IK/EE-space canonical variant · morphology-conditioned policies ·
 additional embodiments via the adapter seam (Isaac Lab / LeRobot / real
 hardware — design notes only today) · LLM-scale paraphrase splits ·
 multi-seed variance study.
+
+## Phase E — Physical AI Data Flywheel
+
+Failure-driven data collection built on the benchmark
+([physical_ai_data_flywheel.md](physical_ai_data_flywheel.md)).
+
+**E.1 — Mac foundation — ✅ completed.** `xembench.flywheel`: typed
+dataset/provenance schemas, dataset index (eval-CSV + demo-HDF5 loaders),
+deterministic validation layer with quality scoring (wraps the existing H5
+validator), failure→candidate rule engine, five budgeted selection
+strategies, dataset/model cards, round comparison
+(improvement-per-demonstration), Linux command planning (generated, never
+executed), deterministic toy round, flywheel artifact packs on the
+existing synthetic rails. `make flywheel-mac-check` green; toy data only —
+**no flywheel results exist**.
+
+**E.2 — first real round (Linux, after Phase B core)** — ⏳ blocked on B:
+
+- [ ] index + validate the round-0 dataset (`--deep-h5`, zero criticals)
+- [ ] candidates + failure_targeted/random selection from real eval
+      failures ([flywheel_linux_plan.md](flywheel_linux_plan.md))
+- [ ] collect both arms' data; validate before training
+- [ ] MVP experiment: baseline / +random / +failure-targeted
+      (+noisy / +filtered second pass) — pre-registered design in
+      [flywheel_experiments.md](flywheel_experiments.md)
+- [ ] compare rounds WITH CIs; first non-synthetic flywheel pack; fill
+      the model card
+
+**E.3 — later** — richer failure labels feeding sharper targeting (needs
+the Phase B runner instrumentation above), learned acquisition baselines,
+VLA-scale dataset export (explicitly out of scope today).

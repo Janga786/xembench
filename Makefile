@@ -18,7 +18,9 @@ SLOTS := {"color": "red", "object": "cube", "relation": "on", "receptacle": "gre
 
 .PHONY: check test test-sim data-slice bc-smoke eval-smoke ppo-smoke smoke clean-smoke \
         mac-check toy-report video-index phase-b-help docs \
-        artifact-pack-toy artifact-pack-help
+        artifact-pack-toy artifact-pack-help \
+        flywheel-help flywheel-toy flywheel-validate-toy flywheel-plan-toy \
+        flywheel-pack-toy flywheel-test flywheel-mac-check
 
 check:
 	uv run python -m xembench.scripts.setup_check
@@ -106,3 +108,65 @@ clean-smoke:
 	rm -rf data/checkpoints/bc_overfit_check data/checkpoints/ppo_smoke \
 	  data/checkpoints/ppo_ft_smoke data/results/eval_smoke.csv \
 	  data/results/eval_smoke_episodes.csv data/checkpoints/linux_gpu_smoke
+
+# ---------------------------------------------------------------------------
+# Physical AI Data Flywheel (docs/physical_ai_data_flywheel.md).
+# Everything below is Mac-safe and runs on SYNTHETIC toy data only; the real
+# collect/train/eval loop is Linux work (docs/flywheel_linux_plan.md).
+# ---------------------------------------------------------------------------
+
+FLYWHEEL_TOY := artifacts/flywheel/toy_round
+
+flywheel-help:
+	@echo "Physical AI Data Flywheel — Mac-safe commands (toy data only):"
+	@echo "  make flywheel-toy           generate the deterministic toy round"
+	@echo "  make flywheel-validate-toy  validate the toy dataset index"
+	@echo "  make flywheel-plan-toy      candidates + selection plan from toy failures"
+	@echo "  make flywheel-pack-toy      full SYNTHETIC flywheel artifact pack"
+	@echo "  make flywheel-test          flywheel test suite"
+	@echo "  make flywheel-mac-check     all of the above, chained"
+	@echo ""
+	@echo "Real data collection, BC training, and evaluation are LINUX-ONLY"
+	@echo "(docs/flywheel_linux_plan.md). CLI reference:"
+	@echo "  uv run python -m xembench.flywheel.build_dataset_index --help"
+	@echo "  uv run python -m xembench.flywheel.validate_dataset --help"
+	@echo "  uv run python -m xembench.flywheel.generate_candidates --help"
+	@echo "  uv run python -m xembench.flywheel.select_candidates --help"
+	@echo "  uv run python -m xembench.flywheel.build_dataset_card --help"
+	@echo "  uv run python -m xembench.flywheel.compare_rounds --help"
+	@echo "  uv run python -m xembench.flywheel.experiment_plan --help"
+	@echo "  uv run python -m xembench.flywheel.build_flywheel_pack --help"
+
+flywheel-toy:
+	uv run python -m xembench.flywheel.generate_toy_flywheel \
+	  --out $(FLYWHEEL_TOY) --overwrite
+
+flywheel-validate-toy: flywheel-toy
+	uv run python -m xembench.flywheel.validate_dataset \
+	  --index $(FLYWHEEL_TOY)/round0_dataset_index.jsonl \
+	  --out artifacts/flywheel/validation/toy_validation_report.md --overwrite
+
+flywheel-plan-toy: flywheel-toy
+	uv run python -m xembench.flywheel.generate_candidates \
+	  --eval-csv $(FLYWHEEL_TOY)/round0_eval_episodes.csv \
+	  --dataset-index $(FLYWHEEL_TOY)/round0_dataset_index.jsonl \
+	  --out artifacts/flywheel/candidates/toy_candidates.jsonl --overwrite
+	uv run python -m xembench.flywheel.select_candidates \
+	  --candidates artifacts/flywheel/candidates/toy_candidates.jsonl \
+	  --strategy failure_targeted --budget-episodes 50 --synthetic \
+	  --input-eval-csv $(FLYWHEEL_TOY)/round0_eval_episodes.csv \
+	  --out artifacts/flywheel/plans/toy_selection_plan.json --overwrite
+
+flywheel-pack-toy: flywheel-toy
+	uv run python -m xembench.flywheel.build_flywheel_pack \
+	  --round-manifest $(FLYWHEEL_TOY)/round_manifest.json \
+	  --out artifacts/releases/flywheel_toy_pack --synthetic --overwrite \
+	  --notes "deterministic toy pack from make flywheel-pack-toy"
+
+flywheel-test:
+	uv run pytest tests/test_flywheel_schemas.py tests/test_flywheel_index.py \
+	  tests/test_flywheel_candidates.py tests/test_flywheel_selection.py \
+	  tests/test_flywheel_toy.py tests/test_flywheel_cli.py -q
+
+flywheel-mac-check: flywheel-test flywheel-validate-toy flywheel-plan-toy flywheel-pack-toy
+	@echo "=== FLYWHEEL MAC FOUNDATION GREEN (synthetic data only) ==="
