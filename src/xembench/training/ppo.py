@@ -16,6 +16,7 @@ GPU sim (5090).
 
 import copy
 import time
+from collections import deque
 from pathlib import Path
 
 import torch
@@ -102,12 +103,12 @@ class _BatchFn:
 
 def _episode_stats(infos, device):
     """Per-episode success outcomes (0/1 tensor) from ManiSkillVectorEnv
-    final_info. Returns one entry per episode that ended this step so the
-    update-level stat can weight every episode equally — successes terminate
-    early in small groups while failures truncate together at the horizon,
-    so averaging per-step means would let a 2-env step count as much as the
-    full-batch truncation step (this skewed both the printed success rate
-    and best.pt selection)."""
+    final_info, one entry per episode that ended this step. Consumers pool
+    these in a rolling buffer spanning several episode horizons: successes
+    terminate EARLY while failures only appear at horizon truncation, so any
+    window shorter than a full horizon can contain only successes and read
+    100% no matter how bad the policy is (this once picked a best.pt from a
+    handful of lucky episodes)."""
     if "final_info" not in infos:
         return None
     fi = infos["final_info"]
@@ -158,9 +159,12 @@ def train_ppo_state(cfg: dict) -> Path:
 
     global_step, best_success = 0, -1.0
     n_updates = cfg["total_timesteps"] // (T * N)
+    # rolling per-episode outcomes across >=4 batches of episodes; sr is nan
+    # until enough episodes (incl. horizon-truncated failures) are pooled
+    recent = deque(maxlen=max(1024, 4 * N))
+    min_episodes = recent.maxlen // 8
     start = time.time()
     for update in range(1, n_updates + 1):
-        success_rates = []
         for t in range(T):
             global_step += N
             buf_obs[t] = obs
@@ -182,9 +186,9 @@ def train_ppo_state(cfg: dict) -> Path:
                 reward = reward + cfg["gamma"] * fv * trunc.float()
             buf_rew[t] = reward
             next_done = (term | trunc).float()
-            sr = _episode_stats(infos, device)
-            if sr is not None:
-                success_rates.append(sr)
+            outcomes = _episode_stats(infos, device)
+            if outcomes is not None:
+                recent.extend(outcomes.tolist())
 
         with torch.no_grad():
             next_value = agent.get_value(obs).view(-1)
@@ -205,8 +209,8 @@ def train_ppo_state(cfg: dict) -> Path:
             cfg["ent_coef"], cfg["vf_coef"], cfg["max_grad_norm"],
         )
 
-        sr = (torch.cat(success_rates).mean().item()
-              if success_rates else float("nan"))
+        sr = (sum(recent) / len(recent)
+              if len(recent) >= min_episodes else float("nan"))
         if update % cfg.get("log_every", 1) == 0:
             sps = int(global_step / (time.time() - start))
             print(f"update {update}/{n_updates} step {global_step} "
@@ -214,7 +218,7 @@ def train_ppo_state(cfg: dict) -> Path:
             writer.add_scalar("charts/success_rate", sr, global_step)
             for k, v in stats.items():
                 writer.add_scalar(f"losses/{k}", v, global_step)
-        if success_rates and sr >= best_success:
+        if len(recent) >= min_episodes and sr >= best_success:
             best_success = sr
             torch.save(dict(model=agent.state_dict(), state_dim=state_dim,
                             action_dim=action_dim, task=cfg["task"]),
@@ -283,9 +287,10 @@ def train_ppo_visual(cfg: dict) -> Path:
 
     global_step, best_success = 0, -1.0
     n_updates = cfg["total_timesteps"] // (T * N)
+    recent = deque(maxlen=max(1024, 4 * N))
+    min_episodes = recent.maxlen // 8
     mb_mask = adapter.action_mask.to(device)
     for update in range(1, n_updates + 1):
-        success_rates = []
         for t in range(T):
             global_step += N
             for k in OBS_KEYS:
@@ -303,9 +308,9 @@ def train_ppo_visual(cfg: dict) -> Path:
             trunc = torch.as_tensor(trunc, device=device).view(-1)
             buf_rew[t] = reward
             next_done = (term | trunc).float()
-            sr = _episode_stats(infos, device)
-            if sr is not None:
-                success_rates.append(sr)
+            outcomes = _episode_stats(infos, device)
+            if outcomes is not None:
+                recent.extend(outcomes.tolist())
 
         with torch.no_grad():
             next_value = agent.get_value(obs).view(-1)
@@ -340,14 +345,14 @@ def train_ppo_visual(cfg: dict) -> Path:
             extra_loss_fn=bc_reg,
         )
 
-        sr = (torch.cat(success_rates).mean().item()
-              if success_rates else float("nan"))
+        sr = (sum(recent) / len(recent)
+              if len(recent) >= min_episodes else float("nan"))
         print(f"update {update}/{n_updates} step {global_step} success {sr:.2%} "
               f"kl {stats['approx_kl']:.4f} bc_reg {stats.get('bc_reg', 0):.4f}")
         writer.add_scalar("charts/success_rate", sr, global_step)
         for k, v in stats.items():
             writer.add_scalar(f"losses/{k}", v, global_step)
-        if success_rates and sr >= best_success:
+        if len(recent) >= min_episodes and sr >= best_success:
             best_success = sr
             torch.save(agent.bc.state_dict(), out_dir / "best.pt")
 
