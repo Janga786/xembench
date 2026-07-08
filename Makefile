@@ -1,5 +1,10 @@
 # xembench — common entrypoints. `make smoke` is the Phase-A gate.
 
+# ROS installs sourced in the user's shell leak their site-packages onto
+# PYTHONPATH (e.g. /opt/ros/*/lib/python3.*/site-packages); pytest then
+# auto-loads broken ROS plugins. The uv venv owns all deps — drop it.
+unexport PYTHONPATH
+
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
 # SAPIEN bundles a Vulkan loader but no ICD on macOS; point it at MoltenVK.

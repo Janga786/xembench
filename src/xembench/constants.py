@@ -106,9 +106,16 @@ G1_RIGHT_HAND_JOINTS = [
     f"right_{n}_joint" for n in ["zero", "one", "two", "three", "four", "five", "six"]
 ]
 G1_LEFT_HAND_JOINTS = [j.replace("right_", "left_") for j in G1_RIGHT_HAND_JOINTS]
-# +1 canonical = open. If a hand joint closes in the negative direction the
-# sign here flips it; refined empirically if grasping underperforms (B2).
-G1_HAND_OPEN_SIGNS = {j: 1.0 for j in G1_RIGHT_HAND_JOINTS + G1_LEFT_HAND_JOINTS}
+# +1 canonical = open. Signs verified empirically on Linux (B0 prep) with
+# scripts/g1_hand_sign_check.py + rendered frames: the hands' URDF joints are
+# MIRRORED (one-sided limits flip side to side), so "open" is joint-negative
+# on the right hand and joint-positive on the left. With all-(+1) signs the
+# right hand curled closed on an open command. Frames: the check script
+# saves before/open/close renders for human re-verification.
+G1_HAND_OPEN_SIGNS = {
+    **{j: -1.0 for j in G1_RIGHT_HAND_JOINTS},
+    **{j: 1.0 for j in G1_LEFT_HAND_JOINTS},
+}
 
 G1_TORSO_JOINTS = ["torso_joint"]
 

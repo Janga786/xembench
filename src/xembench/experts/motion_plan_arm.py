@@ -27,6 +27,14 @@ from xembench.envs.wrappers import UnifiedObsWrapper
 from xembench.utils.config import common_parser, load_config, load_yaml, repo_root
 from xembench.utils.seeding import seed_everything
 
+# ManiSkill's motion-planning solvers only speak pd_joint_pos (absolute
+# targets; in any other control mode open/close_gripper even emit 15-dim
+# pos+vel actions). The solver env therefore runs in pd_joint_pos on CPU sim
+# (the backend the upstream solutions are written against), and the recorder
+# converts each absolute arm target into the equivalent normalized
+# pd_joint_delta_pos action, so demos stay in the benchmark control mode.
+SOLVER_CONTROL_MODE = "pd_joint_pos"
+
 # task -> ManiSkill motion-planning solver (imported lazily: mplib is
 # Linux-only and these imports pull it in)
 SOLVER_PATHS = {
@@ -41,12 +49,20 @@ SOLVER_PATHS = {
 
 class _Recorder:
     """Intercepts env.step to capture (unified obs, native action) pairs while
-    the motion planner drives the env."""
+    the motion planner drives the env.
 
-    def __init__(self, wrapped: UnifiedObsWrapper):
+    The planner steps the env with absolute pd_joint_pos targets; what gets
+    RECORDED is the pd_joint_delta_pos action that reproduces the same target
+    (delta controllers offset from current qpos: target = qpos + scale*a).
+    The gripper dim is identical in both control modes and passes through.
+    """
+
+    def __init__(self, wrapped: UnifiedObsWrapper, arm_dim: int, delta_scale: float):
         self.wrapped = wrapped
+        self.arm_dim, self.delta_scale = arm_dim, delta_scale
         self.frames, self.proprios, self.natives = [], [], []
         self.last_obs = None
+        self.clipped_steps = 0
         self._orig_step = wrapped.env.step
 
     def start(self, obs):
@@ -58,8 +74,14 @@ class _Recorder:
         o = self.last_obs
         self.frames.append(o["rgb"][0].permute(1, 2, 0).cpu().numpy())
         self.proprios.append(o["proprio"][0].cpu().numpy())
-        self.natives.append(np.asarray(torch.as_tensor(action).reshape(-1),
-                                       dtype=np.float32))
+        abs_act = np.asarray(torch.as_tensor(action).reshape(-1), dtype=np.float32)
+        qpos = self.wrapped._base_env().agent.robot.get_qpos()[
+            0, : self.arm_dim].cpu().numpy()
+        delta = (abs_act[: self.arm_dim] - qpos) / self.delta_scale
+        if np.abs(delta).max() > 1.0:
+            self.clipped_steps += 1
+        self.natives.append(np.concatenate(
+            [np.clip(delta, -1.0, 1.0), abs_act[self.arm_dim:]]).astype(np.float32))
         result = self._orig_step(action)
         self.last_obs = self.wrapped._unify(result[0])
         return result
@@ -77,11 +99,18 @@ def collect_mp(cfg: dict) -> int:
     solve = getattr(importlib.import_module(module_name), fn_name)
 
     adapter = get_adapter(task["embodiment"])
-    env = make_env(task["env_id"], num_envs=1, obs_mode="rgb")
+    env = make_env(task["env_id"], num_envs=1, obs_mode="rgb",
+                   control_mode=SOLVER_CONTROL_MODE, sim_backend="cpu")
     wrapped = UnifiedObsWrapper(env, adapter, task["camera"], task["family"],
                                 static_slots=task.get("slots"),
                                 language_seed=cfg["seed"])
-    recorder = _Recorder(wrapped)
+    # Bounds of the arm's delta controller (the mode demos are recorded in);
+    # the last native dim is the gripper scalar, shared by both modes.
+    arm_cfg = env.unwrapped.agent._controller_configs[CONTROL_MODE]["arm"]
+    assert arm_cfg.use_delta and not arm_cfg.use_target and \
+        arm_cfg.lower == -arm_cfg.upper, f"unexpected {CONTROL_MODE} arm config"
+    recorder = _Recorder(wrapped, arm_dim=adapter.native_action_dim - 1,
+                         delta_scale=float(arm_cfg.upper))
 
     out = cfg.get("out") or demo_path(
         repo_root() / "data", task["embodiment"], task["env_id"], "motion_planning"
@@ -130,6 +159,10 @@ def collect_mp(cfg: dict) -> int:
 
     wrapped.close()
     print(f"wrote {n_written} episodes -> {out}\ncolor distribution: {color_counts}")
+    if recorder.clipped_steps:
+        print(f"WARNING: {recorder.clipped_steps} steps exceeded the delta-pos "
+              f"bound (+-{recorder.delta_scale}) and were clipped — replayed "
+              "trajectories will lag the planner at those steps")
     return 0 if n_written == n_target else 1
 
 

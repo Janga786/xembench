@@ -19,7 +19,7 @@ Fails on: missing NVIDIA driver, non-sm_120 wheel resolution. Debug:
 uv run python scripts/check_env.py
 make test && make test-sim
 ```
-Expect: `environment OK`, 75 fast + 5 sim tests pass. mplib must report
+Expect: `environment OK`, 110 fast + 5 sim tests pass. mplib must report
 available (Linux).
 
 ### 3. Full smoke — ~10 min · Mac-safe: yes · output: data/checkpoints/*smoke*, data/results/eval_smoke.csv
@@ -40,10 +40,12 @@ Gate: no crash, sps > 5000 in the log, success curve rises above zero.
 uv run python -m xembench.experts.motion_plan_arm --config configs/presets/panda_demo_collection.yaml --set episodes=5
 uv run python -c "from xembench.data.schema import validate_demo_file as v; print(v('data/demos/panda/PickCubeLang-v1/motion_planning.h5') or 'VALID')"
 ```
-This module is UNTESTED before this moment — expect to fix small API
-mismatches here, not at 200-episode scale. Failure notes: import errors →
-mplib missing; solver exceptions on >20% of attempts → inspect with 1
-episode + printouts.
+Shaken down during B0 Linux prep (5/5 episodes, validator clean, ~1 s per
+episode — 200 eps/task is minutes). The solver env runs pd_joint_pos on CPU
+sim internally; recorded natives are the equivalent pd_joint_delta_pos
+actions. Failure notes: import errors → mplib missing; solver exceptions on
+>20% of attempts → inspect with 1 episode + printouts; a clipped-delta
+warning at the end means the planner outran the ±0.1 rad/step delta bound.
 
 ### 6. Tiny G1 demo path check (random policy) — minutes · Mac-safe: yes · output: data/demos/g1/.../random_check.h5
 ```bash
@@ -71,7 +73,8 @@ uv run python -m xembench.scripts.train_expert_ppo --config configs/presets/g1_e
 ```
 GATE: ≥70% success on apple_bowl_g1 (console + TensorBoard
 `charts/success_rate`) before proceeding. Stalled → gamma 0.8 / lr 1e-4 /
-normalized_dense / check `G1_HAND_OPEN_SIGNS` (docs/phase_b_linux_plan.md).
+normalized_dense / re-run `scripts/g1_hand_sign_check.py` (signs were
+verified+fixed in B0 prep; see docs/phase_b_linux_plan.md).
 
 ### 10. Full demo collection — ~1–2 h per task · LINUX-ONLY · output: data/demos/**/*.h5
 ```bash
