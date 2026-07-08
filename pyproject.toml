@@ -10,7 +10,9 @@ dependencies = [
     "torchvision>=0.22",
     "h5py>=3.10",
     "gymnasium>=0.29.1",
-    "numpy>=1.24",
+    # <2 because toppra (mplib -> ManiSkill motion planning, Linux-only) ships
+    # cp310 wheels compiled against the NumPy 1.x C-ABI; import crashes on 2.x.
+    "numpy>=1.24,<2",
     "pyyaml>=6.0",
     "pandas>=2.0",
     "tabulate>=0.9",

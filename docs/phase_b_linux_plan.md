@@ -8,7 +8,10 @@ The narrative plan: what to run, in what order, what can go wrong, and what
 
 - Linux x86_64, NVIDIA driver new enough for the RTX 5090 (Blackwell,
   sm_120) — driver ≥ 570 series.
-- Python 3.11 via uv (`.python-version` pins it). `uv sync` resolves
+- Python **3.10** via uv (`.python-version` pins it). 3.11+ cannot resolve
+  on Linux: toppra (mplib -> ManiSkill motion planning) ships cp310-only
+  wheels and no sdist; the same wheels also force `numpy<2` (their Cython
+  extension is built against the NumPy 1.x C-ABI). `uv sync` resolves
   **torch cu128 wheels** automatically on Linux (index gating in
   `pyproject.toml`); mplib installs automatically (mani_skill's own
   platform marker).
@@ -42,8 +45,8 @@ expert training) come first.
 
 | Step | What | Gate before proceeding |
 |---|---|---|
-| B1 | Motion-planning demos for the 3 arm tasks (`experts.motion_plan_arm`, **untested until now** — expect small fixes) + HF replay for PushT | 200 eps/task; solver success ≥~80% of attempts; color distribution printed and covers all train colors; `validate_demo_file` clean; 3 spot-check videos |
-| B2 | G1 PPO experts (dense reward, state obs) — **the schedule risk** | ≥70% success on apple_bowl_g1. If stalled after ~30M steps: try gamma 0.8, lr 1e-4, `reward_mode: normalized_dense`, longer training; check the hand-sign caveat (`G1_HAND_OPEN_SIGNS`). Worst case: ship PlaceAppleInBowl only, mark TransportBox experimental |
+| B1 | Motion-planning demos for the 3 arm tasks (`experts.motion_plan_arm`, shaken down in B0 Linux prep: the solver env runs pd_joint_pos internally, demos are recorded as the equivalent pd_joint_delta_pos actions; 5-episode run took seconds on the 5090 box, so 200 eps/task is minutes, not hours) + HF replay for PushT | 200 eps/task; solver success ≥~80% of attempts; color distribution printed and covers all train colors; `validate_demo_file` clean; 3 spot-check videos |
+| B2 | G1 PPO experts (dense reward, state obs) — **the schedule risk** | ≥70% success on apple_bowl_g1. If stalled after ~30M steps: try gamma 0.8, lr 1e-4, `reward_mode: normalized_dense`, longer training. Hand signs (`G1_HAND_OPEN_SIGNS`) were verified/fixed in B0 prep — the right hand is joint-mirrored — via `scripts/g1_hand_sign_check.py`; re-run it (and eyeball its frames) if grasping still underperforms. Worst case: ship PlaceAppleInBowl only, mark TransportBox experimental |
 | B2b | Collect 200 G1 rgb demos via the expert | success-filtered by construction; `validate_demo_file`; eyeball 3 videos |
 | B3 | BC per (task, embodiment) — 6 runs, `bc_train_full` preset | val loss converged; native eval success meaningfully above random on a 20-episode spot check |
 | B4 | PPO fine-tune per task, `ppo_finetune_full` preset | success ≥ BC baseline; watch `losses/approx_kl` and `losses/bc_reg` for collapse |
@@ -85,6 +88,8 @@ report appendix.
 | Symptom | Likely cause / fix |
 |---|---|
 | torch sees no GPU | driver/wheel mismatch — `nvidia-smi`, then `uv run python -c "import torch; print(torch.version.cuda)"`; must be cu128 |
+| `import mplib` crashes citing NumPy 1.x/2.x ABI | toppra wheels need `numpy<2` — pinned in pyproject; `uv sync` should restore it |
+| pytest dies loading a ROS plugin (`lark`, `launch_testing`) | a sourced ROS install leaks site-packages via PYTHONPATH; the Makefile unexports it — for direct `uv run pytest` use `env -u PYTHONPATH` |
 | `no kernel image for device` | non-cu128 torch got installed — `uv sync --reinstall-package torch` |
 | Vulkan errors headless | install `libvulkan1 vulkan-tools`; NVIDIA ICD at `/usr/share/vulkan/icd.d/nvidia_icd.json`; in Docker add `NVIDIA_DRIVER_CAPABILITIES=all` |
 | mplib import errors (B1) | it only installs on Linux — confirm `uv sync` ran on THIS machine; `uv run python -c "import mplib"` |

@@ -10,6 +10,7 @@ data/demos/
 data/checkpoints/
 data/results/
 data/frames/
+data/shakedown/
 runs/
 outputs/*
 !outputs/.gitkeep
