@@ -27,7 +27,9 @@ env_kwargs:
     gpu_memory_config:
       # The 2048-env G1 scene overflows the PhysX GPU collision stack — SAPIEN
       # logs a critical "collisionStackSize buffer overflow" and silently
-      # drops contacts. The demand scales with live contact count (observed
-      # asks: 8.1M with default 4.2M, then 28.6M once random-policy contact
-      # chatter ramped), so give it 128MB of headroom.
-      collision_stack_size: 134217728
+      # drops contacts. The demand scales with live contact count and RISES
+      # AS THE POLICY LEARNS CONTACT (observed asks: 8.1M with default 4.2M
+      # at init, 28.6M under random-action chatter, 136M once training made
+      # contact-seeking behavior). 512MB has held; watch for the critical
+      # log line if anything about the scene changes.
+      collision_stack_size: 536870912
