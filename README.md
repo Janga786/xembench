@@ -1,7 +1,8 @@
 # xembench — X-Embodiment Language-Grounded Manipulation Benchmark
 
-**Status: Phase A.5 complete — pipeline built, smoke-verified, documented,
-and hardened on macOS (v0.2). Phase B (actual training + benchmark numbers)
+**Status: Phase A.6 complete — pipeline built, smoke-verified, documented,
+hardened, and artifact-packaged on macOS (v0.3.1); Linux environment prep
+green (v0.3.2-linux-ready). Phase B (actual training + benchmark numbers)
 pending — requires the Linux / RTX 5090 machine. No benchmark results exist
 yet; nothing in this repo claims any.**
 
@@ -53,6 +54,17 @@ makes it auditable.
 - G1 PPO experts untrained (need GPU-parallel sim).
 - Diffusion policy = design stub. Fine-grained failure labels beyond
   success/timeout need Phase B instrumentation.
+
+## Experimental extension: Physical AI Data Flywheel
+
+`xembench.flywheel` builds a closed-loop, failure-driven data pipeline on
+top of the benchmark: eval failures → typed candidate demo requests →
+budgeted selection → dataset validation/cards → (Linux) collection and
+training → round-over-round comparison. Mac foundation only for now —
+schemas, validators, selection strategies, Linux command planning, and a
+deterministic toy pipeline; **no real flywheel results exist**. Start at
+[docs/physical_ai_data_flywheel.md](docs/physical_ai_data_flywheel.md) or
+`make flywheel-help`.
 
 ## Quickstart — macOS (development/smoke; Apple Silicon, no CUDA)
 
@@ -147,6 +159,7 @@ rates by design (tiny data/training) — they verify plumbing, not policies.
 [Phase B plan](docs/phase_b_linux_plan.md) ·
 [Phase B commands](docs/phase_b_commands.md) ·
 [report outline](docs/report_outline.md) ·
+[data flywheel](docs/physical_ai_data_flywheel.md) ·
 [project page](docs/project_page.md) · [roadmap](docs/roadmap.md) ·
 [references](docs/references.md) ·
 [application summary](docs/application_summary.md) ·

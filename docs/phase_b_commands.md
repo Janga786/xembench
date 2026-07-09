@@ -147,3 +147,8 @@ uv run python -m xembench.analysis.video_index
 Done = the gates in steps 9–13 all passed and
 [phase_b_linux_plan.md — "What success looks like"](phase_b_linux_plan.md)
 holds.
+
+After step 13, the eval outputs (`data/results/eval_episodes.csv`) and demo
+files double as round-0 inputs for the Physical AI Data Flywheel —
+[flywheel_linux_plan.md](flywheel_linux_plan.md) picks up from exactly
+here (index → validate → candidates → targeted collection).
