@@ -112,8 +112,12 @@ def collect_mp(cfg: dict) -> int:
     recorder = _Recorder(wrapped, arm_dim=adapter.native_action_dim - 1,
                          delta_scale=float(arm_cfg.upper))
 
+    # source names the output file (flywheel rounds pass e.g.
+    # source=flywheel_timeout — hardcoding "motion_planning" here would
+    # silently overwrite the round-0 baseline demos)
     out = cfg.get("out") or demo_path(
-        repo_root() / "data", task["embodiment"], task["env_id"], "motion_planning"
+        repo_root() / "data", task["embodiment"], task["env_id"],
+        cfg.get("source") or "motion_planning"
     )
     n_target, n_written, attempt = cfg["episodes"], 0, 0
     color_counts: dict[str, int] = {}

@@ -26,7 +26,12 @@ def resolve_demos(cfg: dict) -> list[str]:
     tasks = load_yaml(repo_root() / "configs" / "tasks.yaml")["tasks"]
     task = tasks[cfg["task"]]
     pattern = f"{repo_root()}/data/demos/{task['embodiment']}/{task['env_id']}/*.h5"
-    paths = sorted(glob(pattern))
+    # flywheel round files (flywheel_<tag>.h5) live beside the baselines but
+    # belong to specific experiment arms — discovery must not silently ingest
+    # them or the round-0 baseline stops being reproducible; list them
+    # explicitly via cfg.demos instead
+    paths = sorted(p for p in glob(pattern)
+                   if not p.split("/")[-1].startswith("flywheel_"))
     if not paths:
         raise FileNotFoundError(f"no demo files match {pattern}")
     return paths
