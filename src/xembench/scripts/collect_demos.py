@@ -29,7 +29,7 @@ from xembench.utils.config import common_parser, load_config, load_yaml, repo_ro
 from xembench.utils.seeding import seed_everything
 
 
-def make_policy(spec: str, env, adapter):
+def make_policy(spec: str, env, adapter, deterministic: bool = True):
     if spec == "random":
         space = env.action_space
 
@@ -40,7 +40,8 @@ def make_policy(spec: str, env, adapter):
     if spec.startswith("ppo:"):
         from xembench.experts.ppo_expert import load_expert_policy
 
-        return load_expert_policy(spec.split(":", 1)[1], env, adapter)
+        return load_expert_policy(spec.split(":", 1)[1], env, adapter,
+                                  deterministic=deterministic)
     raise ValueError(f"unknown policy spec: {spec!r}")
 
 
@@ -56,7 +57,8 @@ def collect(cfg: dict) -> int:
         static_slots=task.get("slots"), include_flat_state=True,
         language_seed=cfg["seed"],
     )
-    policy = make_policy(cfg["policy"], env, adapter)
+    policy = make_policy(cfg["policy"], env, adapter,
+                         deterministic=cfg.get("policy_deterministic", True))
 
     from xembench.utils.config import resolve_path
 

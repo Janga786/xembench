@@ -11,7 +11,12 @@ import torch
 from xembench.models.ac_policy import StateActorCritic
 
 
-def load_expert_policy(ckpt_path: str, env, adapter, device: str = "cpu"):
+def load_expert_policy(ckpt_path: str, env, adapter, device: str = "cpu",
+                       deterministic: bool = True):
+    """deterministic=False samples the training-time action distribution —
+    useful when an expert's success rides on its exploration noise (observed
+    on transport_box: 8.5% stochastic vs 1.4% deterministic). Demos stay
+    success-filtered either way."""
     ckpt = torch.load(ckpt_path, map_location=device, weights_only=True)
     model = StateActorCritic(ckpt["state_dim"], ckpt["action_dim"])
     model.load_state_dict(ckpt["model"])
@@ -30,6 +35,6 @@ def load_expert_policy(ckpt_path: str, env, adapter, device: str = "cpu"):
             f"flat_state dim {state.shape[-1]} != expert's {ckpt['state_dim']} — "
             "collection env must expose the same extra obs as obs_mode='state'"
         )
-        return model.act(state, deterministic=True).cpu()
+        return model.act(state, deterministic=deterministic).cpu()
 
     return policy
