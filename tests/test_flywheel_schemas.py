@@ -50,11 +50,17 @@ def test_valid_objects_have_no_problems():
 
 
 def test_episode_invalid_fields_all_reported():
-    ep = make_episode(embodiment="ur5", split="nope", steps=0, seed=-1,
+    # seed=-1 is the valid "source seed unknown" sentinel (replayed demos);
+    # anything below it is invalid
+    ep = make_episode(embodiment="ur5", split="nope", steps=0, seed=-2,
                       failure_label="exploded")
     problems = " ".join(ep.validate())
     for frag in ["embodiment", "split", "steps", "seed", "failure_label"]:
         assert frag in problems
+
+
+def test_unknown_seed_sentinel_is_valid():
+    assert make_episode(seed=-1).validate() == []
 
 
 def test_success_flag_must_match_failure_label():

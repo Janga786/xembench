@@ -200,8 +200,13 @@ class DemoEpisodeMetadata:
                   FAILURE_LABELS)
         if self.success != (self.failure_label == "success"):
             problems.append("success flag and failure_label disagree")
-        if not isinstance(self.seed, int) or self.seed < 0:
-            problems.append(f"seed must be a non-negative int, got "
+        # -1 is the documented "source seed unknown" sentinel (the field's own
+        # default): replayed datasets (convert_ms_demos, e.g. PushT HF demos)
+        # keep their original seeds in the ManiSkill json sidecar, not the
+        # h5. The deep validator surfaces those as `invalid_seed` findings
+        # instead of making real datasets unindexable.
+        if not isinstance(self.seed, int) or self.seed < -1:
+            problems.append(f"seed must be an int >= -1 (-1 = unknown), got "
                             f"{self.seed!r}")
         if self.steps <= 0:
             problems.append(f"steps must be positive, got {self.steps}")
