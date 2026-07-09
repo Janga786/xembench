@@ -28,7 +28,7 @@ from mani_skill.utils.structs.pose import Pose
 from xembench.constants import COLOR_RGBA, COLOR_SETS
 
 
-@register_env("PickCubeLang-v1", max_episode_steps=50)
+@register_env("PickCubeLang-v1", max_episode_steps=100)
 class PickCubeLangEnv(PickCubeEnv):
     """Language-grounded pick-and-place: 'pick up the {color} cube and place
     it on the green target'."""

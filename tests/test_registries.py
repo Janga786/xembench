@@ -27,7 +27,9 @@ def test_task_registry_lists_expected_tasks():
         missing = REQUIRED_TASK_KEYS - set(task)
         assert not missing, f"{name}: missing keys {missing}"
         assert task["embodiment"] in KNOWN_EMBODIMENTS
-        assert task["max_steps"] in (50, 100)
+        # horizons are per-task (sized to each task's demo-length p95 +
+        # margin — see tasks.yaml comments); assert sanity, not magic values
+        assert isinstance(task["max_steps"], int) and 0 < task["max_steps"] <= 500
 
 
 def test_task_embodiments_resolve_to_adapters():

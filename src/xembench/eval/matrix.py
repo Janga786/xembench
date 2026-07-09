@@ -27,7 +27,11 @@ def _make_wrapped(task: dict, instruction_cond: str, color_cond: str, seed: int)
     env_kwargs = {}
     if _is_lang_env(task["env_id"]) and color_cond == "unseen":
         env_kwargs["color_set"] = "unseen"
-    env = make_env(task["env_id"], num_envs=1, obs_mode="rgb", **env_kwargs)
+    # the registry's max_steps is the benchmark horizon — enforce it at env
+    # creation so stock envs (whose upstream registration may be shorter,
+    # e.g. PullCubeTool at 100 vs demos needing ~300) don't truncate early
+    env = make_env(task["env_id"], num_envs=1, obs_mode="rgb",
+                   max_episode_steps=task["max_steps"], **env_kwargs)
     adapter = get_adapter(task["embodiment"])
     wrapped = UnifiedObsWrapper(
         env, adapter, task["camera"], task["family"],

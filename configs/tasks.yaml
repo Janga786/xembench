@@ -7,14 +7,17 @@ tasks:
     embodiment: panda
     family: pick_place
     camera: base_camera
-    max_steps: 50
+    # horizons cover the canonical demo source (p95 length + margin) — the
+    # frozen 50-step eval was timeout-impossible by construction (B5 v1
+    # measured 0% success with 100% timeout failures; demo p95 = 92)
+    max_steps: 100
     demo_source: motion_planning   # mplib -> Linux only
   stack_cube_arm:
     env_id: StackCubeLang-v1
     embodiment: panda
     family: stack
     camera: base_camera
-    max_steps: 50
+    max_steps: 150                 # demo p95 = 126
     demo_source: motion_planning
   push_t_arm:
     env_id: PushT-v1
@@ -29,7 +32,8 @@ tasks:
     embodiment: panda
     family: tool_pull
     camera: base_camera
-    max_steps: 100
+    max_steps: 300                 # demo p95 = 284; stock env registers 100,
+                                   # so envs are created with this override
     demo_source: hf_replay
     slots: {color: blue, object: cube}
   apple_bowl_g1:

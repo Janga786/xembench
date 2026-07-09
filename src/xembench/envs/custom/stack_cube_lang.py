@@ -21,7 +21,7 @@ from mani_skill.utils.structs.pose import Pose
 from xembench.constants import COLOR_RGBA, COLOR_SETS
 
 
-@register_env("StackCubeLang-v1", max_episode_steps=50)
+@register_env("StackCubeLang-v1", max_episode_steps=150)
 class StackCubeLangEnv(StackCubeEnv):
     """Language-grounded stacking: 'stack the {color} cube on top of the
     {color2} cube'."""

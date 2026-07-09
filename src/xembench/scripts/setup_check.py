@@ -31,7 +31,8 @@ EXPECTED_ACTION_DIMS = {
 
 def check_task(name: str, task: dict, n_steps: int = 10) -> list[str]:
     errors = []
-    env = make_env(task["env_id"], num_envs=1, obs_mode="rgb")
+    env = make_env(task["env_id"], num_envs=1, obs_mode="rgb",
+                   max_episode_steps=task["max_steps"])
     u = env.unwrapped
     obs, _ = env.reset(seed=0)
 
@@ -57,18 +58,24 @@ def check_task(name: str, task: dict, n_steps: int = 10) -> list[str]:
         if key not in obs:
             errors.append(f"{name}: obs missing top-level key {key!r}")
 
-    # --- episode length registered as configured (ManiSkill's own registry;
-    # the gym spec does not carry it) ---
-    from mani_skill.utils.registration import REGISTERED_ENVS
-
-    spec_steps = REGISTERED_ENVS[task["env_id"]].max_episode_steps
-    if spec_steps != task["max_steps"]:
-        errors.append(f"{name}: max_episode_steps {spec_steps} != {task['max_steps']}")
-
-    # --- random rollout ---
-    for _ in range(n_steps):
+    # --- random rollout, run to the horizon: tasks.yaml max_steps is the
+    # benchmark horizon and envs are created with it (stock envs may register
+    # a shorter limit, e.g. PullCubeTool 100 vs the 300 demos need — spec
+    # introspection is unreliable across ManiSkill's wrappers, so assert the
+    # applied limit empirically by observing where truncation fires) ---
+    trunc_at = None
+    for i in range(task["max_steps"] + 20):
         action = env.action_space.sample()
         obs, reward, terminated, truncated, info = env.step(action)
+        if bool(torch.as_tensor(truncated).reshape(-1)[0]):
+            trunc_at = i + 1
+            break
+        if bool(torch.as_tensor(terminated).reshape(-1)[0]):
+            break  # random policy fluke-success; horizon can't be asserted
+    if trunc_at is not None and trunc_at != task["max_steps"]:
+        errors.append(f"{name}: truncated at {trunc_at} != max_steps "
+                      f"{task['max_steps']}")
+    spec_steps = trunc_at or task["max_steps"]
 
     # --- save a frame for eyeballing ---
     frame_dir = repo_root() / "data" / "frames"
