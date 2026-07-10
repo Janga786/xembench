@@ -167,6 +167,34 @@ own seed=-1 unknown-provenance default (`7909652`), and the generated
 collection commands would have overwritten round-0 baselines via
 motion_plan_arm's hardcoded output name (`0b1c8f0`).
 
+## 4b. The precision-manipulation intervention study (night 3)
+
+Executing round 1's recommendation, a systematic attack on the 0%
+precision baselines (pick_cube as the study task; 25–50-episode probes,
+seed 0, canonical/train):
+
+- **Pipeline exoneration:** open-loop replay of ground-truth demo actions
+  through the exact canonical→adapter→delta-env path succeeds 5/5 — the
+  interface and data are correct; the model is the ceiling.
+- **Failure localization:** instrumented rollouts reach within 2–3 cm and
+  command the gripper decisively; failures are last-inch grasp conversion.
+- **Interventions:** action chunking implemented (k-step windows,
+  repeat-last padding, queue/ensemble/receding-horizon execution,
+  chunk=1 backward-compatible; `ad17566`, `d101c22`): k=16@200 demos 0%;
+  k=8@2,000 demos **4%**; ensembling 0% (blurs gripper commitment);
+  gripper binarization and receding horizon 4% (execution saturated);
+  ResNet-18 encoder 0% (train 0.0002/val 0.0077 — overfits);
+  **10,000 demos 2% — the scaling curve is flat**
+  (`docs/media/pick_scaling.png`); dense-reward visual PPO fine-tune
+  0.1% at 460k steps with recurring KL spikes (killed). Side effects:
+  pull_tool 1.3% → **8%** (k=8 + 2,000 demos); stack_cube stayed 0%.
+- **Conclusion:** with data volume, execution strategy, encoder capacity,
+  and RL fine-tuning eliminated under a proven pipeline, the binding
+  constraint is the policy class — single-frame MLP-head BC at 128 px vs
+  the transformer sequence models (ACT-class) that solve this regime.
+  That is the benchmark's quantified open problem; 11,600 additional
+  clean demonstrations were collected and remain available for it.
+
 ## 5. Session engineering notes
 
 - Two long stalls were self-inflicted and fixed procedurally: untracked

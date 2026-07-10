@@ -1,111 +1,148 @@
 # xembench — X-Embodiment Language-Grounded Manipulation Benchmark
 
-**Status: Phase A.6 complete — pipeline built, smoke-verified, documented,
-hardened, and artifact-packaged on macOS (v0.3.1); Linux environment prep
-green (v0.3.2-linux-ready). Phase B (actual training + benchmark numbers)
-pending — requires the Linux / RTX 5090 machine. No benchmark results exist
-yet; nothing in this repo claims any.**
+**One language-conditioned policy network. One canonical 21-dim action
+interface. Two robot bodies — a Franka Panda arm and a Unitree G1 humanoid.
+xembench measures exactly how much manipulation skill survives the swap,
+and when it doesn't, its failure taxonomy and data flywheel say why.**
 
-## Thesis
+<table>
+<tr>
+<td align="center"><img src="docs/media/g1_apple_place.gif" width="240"/><br/>
+<sub>G1 expert: <i>“pick up the red apple and place it in the bowl”</i></sub></td>
+<td align="center"><img src="docs/media/bc_push_t.gif" width="240"/><br/>
+<sub>BC from pixels+language: <i>“push the t-shaped block onto the red target”</i> — 45.7%</sub></td>
+</tr>
+<tr>
+<td align="center"><img src="docs/media/bc_transport.gif" width="240"/><br/>
+<sub>Humanoid BC: <i>“pick up the box and carry it to the other table”</i> — 18.8%</sub></td>
+<td align="center"><img src="docs/media/bc_pick_timeout.gif" width="240"/><br/>
+<sub>What the open problem looks like: last-inch grasp failure (timeout)</sub></td>
+</tr>
+</table>
 
-When language, task structure, and policy architecture are all shared, how
-much manipulation performance survives a change of robot body — and where
-exactly does transfer fail? xembench turns that question into a measurable
-systems problem: one language-conditioned policy network speaks a canonical
-21-dimensional action interface, thin per-robot adapters translate to a
-Franka Panda tabletop arm and a Unitree G1 humanoid upper body (ManiSkill3),
-and the benchmark measures the success-rate drop under zero-shot
-cross-embodiment evaluation — same weights, swapped adapter — alongside
-held-out-paraphrase and unseen-color generalization.
+Built solo on ManiSkill3 + a single RTX 5090. Every number below traces to
+a checkpoint + config snapshot + git SHA; every video re-runs an exact
+evaluation episode seed.
 
-## Why cross-embodiment transfer matters
+## Results (v2 matrix — 73 cells, 6,550 episodes, 3 seeds, Wilson CIs)
 
-Robot learning is accumulating large multi-robot datasets on the premise
-that skills transfer across bodies. That premise is rarely *measured* under
-controlled conditions: most benchmarks vary tasks while holding the robot
-fixed. xembench holds language, tasks (analogous pairs), architecture, and
-training recipe fixed and varies only the body — so a transfer failure is
-attributable to embodiment, and the failure taxonomy says whether it broke
-at grounding (wrong object) or at motor control (reach/grasp). The
-benchmark deliberately does **not** claim to solve embodiment transfer; it
-makes it auditable.
+| Task | Embodiment | BC native success | Held-out paraphrase | Notes |
+|---|---|---:|---:|---|
+| push_t | Panda (stick) | **45.7%** | 46.3% | language grounding robust |
+| transport_box | **G1 humanoid** | **18.8%** | 21.0% | learned from 8.5%-stochastic expert demos |
+| pull_tool | Panda | 1.3% → **8%** | — | after chunking + 10× demos (probe) |
+| pick_cube | Panda | 0% → 4% | — | the open problem (see study below) |
+| stack_cube | Panda | 0% | 0% | " |
+| apple_bowl | G1 humanoid | 0% | 0% | thin-demo imitation failure (finding 3) |
 
-## What is implemented now (Phase A, smoke-verified on macOS)
+Cross-embodiment transfer cells are all ≈0% at these baselines — the
+benchmark's headline metric is *waiting for a policy class strong enough
+to cross it*, and everything needed to measure that day is in place.
 
-- 6 tasks across 2 embodiments (ManiSkill3, CPU or GPU sim):
-  `PickCubeLang-v1`, `StackCubeLang-v1` (ours: color-randomized,
-  language-load-bearing), stock `PushT-v1`, `PullCubeTool-v1`, and G1
-  `UnitreeG1PlaceAppleInBowl-v1`, `UnitreeG1TransportBox-v1`.
-- Canonical 21-dim action space + Panda / panda_stick / G1 adapters with
-  round-trip and live-env validation tests.
-- Language stack with a provably leak-free train/heldout paraphrase split
-  and disjoint train/unseen color sets (both enforced by tests).
-- HDF5 demo pipeline (HF-replay conversion + live collection), BC trainer,
-  CleanRL PPO (state-expert and visual fine-tune modes), evaluation matrix
-  with per-episode records, failure-taxonomy analysis CLIs.
-- The full path — train BC → evaluate natively → zero-shot on the other
-  embodiment → CSV + transfer table — runs end-to-end in `make smoke`.
+## The precision-manipulation study (an honest negative result)
 
-## What is NOT implemented / not run yet
+Half the tasks sat at 0% with a single failure label: timeout. We proved
+the pipeline innocent first — **open-loop replay of ground-truth
+demonstration actions through the identical adapter→env path succeeds
+5/5** — then systematically attacked the policy:
 
-- No demonstrations at scale, no trained policies, **no numbers** (Phase B).
-- Motion-planning demo collection is written but untested (mplib is
-  Linux-only).
-- G1 PPO experts untrained (need GPU-parallel sim).
-- Diffusion policy = design stub. Fine-grained failure labels beyond
-  success/timeout need Phase B instrumentation.
+<img src="docs/media/pick_scaling.png" width="520"/>
 
-## Experimental extension: Physical AI Data Flywheel
+| Intervention (pick_cube, 25–50-ep probes) | Result |
+|---|---:|
+| single-step BC, 200 demos (baseline) | 0% |
+| + 10× demonstrations (2,000) | 0% |
+| + action chunking k=16 (Zhao et al. 2023) | 0% |
+| + temporal ensembling | 0% |
+| **action chunking k=8 + 10× demos** | **4%** |
+| + gripper binarization / receding horizon | 4% |
+| + ResNet-18 encoder (4× params) | 0% (overfits) |
+| + 50× demonstrations (10,000) | 2% (flat) |
+| dense-reward visual PPO fine-tune | 0.1% (KL-unstable) |
 
-`xembench.flywheel` builds a closed-loop, failure-driven data pipeline on
-top of the benchmark: eval failures → typed candidate demo requests →
-budgeted selection → dataset validation/cards → (Linux) collection and
-training → round-over-round comparison. Mac foundation only for now —
-schemas, validators, selection strategies, Linux command planning, and a
-deterministic toy pipeline; **no real flywheel results exist**. Start at
-[docs/physical_ai_data_flywheel.md](docs/physical_ai_data_flywheel.md) or
-`make flywheel-help`.
+Diagnosis (instrumented rollouts): reaching is accurate to 2–3 cm and the
+gripper commits fully — failures concentrate in **last-inch grasp
+conversion**, and neither data volume nor execution strategy moves it.
+The bottleneck is the policy class: single-frame MLP-head BC at 128 px,
+versus the transformer sequence models (ACT, diffusion policies) that
+solve this regime elsewhere. That gap is now this benchmark's central,
+*quantified* open problem — with 12,800 clean demonstrations per-task
+infrastructure ready for whoever closes it.
 
-## Quickstart — macOS (development/smoke; Apple Silicon, no CUDA)
+## Physical AI Data Flywheel (first real round, executed)
 
-```bash
-./scripts/setup_mac.sh     # brew uv + molten-vk, uv sync, env check
-make smoke                 # full Phase A gate (~10-15 min)
+`xembench.flywheel` closes the loop eval failures → typed candidate
+requests → budgeted selection → validated collection → retraining →
+CI-gated round comparison. Round 1 (targeted vs random arms, 50-episode
+budget): **an informative null** — deltas inside CIs, plus a methodology
+finding (single-seed vs pooled-baseline comparisons fabricate ±5–9 pt
+phantom swings; seed-matched CSVs are now the standard). Round 1's
+recommendation — pair data with a compounding-error intervention — became
+the study above. Packs: `artifacts/releases/flywheel_round1`.
+
+## What's inside
+
+```mermaid
+flowchart LR
+  D[demo generators<br/>mplib planner · PPO experts] -->|HDF5 + schema validation| DS[(1,002-demo<br/>benchmark set<br/>+ 11.6k scaling set)]
+  DS --> BC[BC / chunked BC<br/>one network, all bodies]
+  BC --> EV[eval matrix<br/>native · paraphrase · color · transfer]
+  EV -->|episode CSVs, Wilson CIs| AN[failure taxonomy<br/>transfer matrix · reports]
+  AN --> FW[data flywheel<br/>candidates → selection → rounds]
+  FW -->|targeted collection| DS
+  EV --> PK[artifact packs<br/>manifest · checksums · cards]
 ```
 
-## Quickstart — Linux / RTX 5090 (Phase B)
+- **Canonical action space** (21-dim) + thin per-robot adapters with
+  round-trip invariants and live-env joint-order validation — transfer is
+  a pure adapter swap at eval time.
+- **Language stack**: leak-free train/held-out paraphrase split, disjoint
+  train/unseen color sets, both enforced by tests.
+- **Provenance discipline**: every run directory carries its config + git
+  SHA; artifact packs bundle metrics, figures, checksums, dataset/model
+  cards; videos re-run exact episode seeds (`scripts/record_rollouts.py`).
+- 198 tests (unit + sim integration), CI on pure-unit subset.
+
+## Battle scars (selected findings, all reproducible from `data/logs/`)
+
+1. **Eval horizons were impossible by construction** — frozen 50-step caps
+   vs 66–105-step demos; measured as 0%/100%-timeout, fixed to demo-p95,
+   re-run.
+2. **PhysX collision-stack demand grows as the policy learns contact**
+   (8M → 150M bytes; default 4M silently drops contacts at 2048 envs).
+3. **A success metric that read 100% for a bad policy** — successes
+   terminate early, failures truncate together; windows without a
+   truncation step contain only successes. Fixed with rolling episode
+   pooling.
+4. **Staged reward bonuses detonate PPO's KL** exactly when success
+   emerges (approx_kl 28.5 observed); target-KL epoch cutoff added.
+5. **Stochastic-expert demos imitate better than lucky-deterministic
+   ones** (transport 18.8% from an 8.5% expert vs apple 0% from a 6% one).
+6. **The G1's hand joints are URDF-mirrored** — the frozen constants
+   opened one hand while closing the other; caught by a joint-sweep
+   diagnostic before it corrupted every canonical demo.
+
+Full story: [reports/phase_b_campaign_report.md](reports/phase_b_campaign_report.md) ·
+[reports/b0_linux_prep_report.md](reports/b0_linux_prep_report.md)
+
+## Quickstart
 
 ```bash
-./scripts/setup_linux.sh   # cu128 torch (sm_120), GPU + Vulkan checks, sim FPS bench
-make phase-b-help          # prints the ordered Phase B command sequence
+# Linux + NVIDIA (tested: RTX 5090 / cu128)
+./scripts/setup_linux.sh        # uv env, CUDA/Vulkan checks, sim FPS bench
+make smoke                      # full pipeline gate (~10 min)
+make phase-b-help               # the ordered training runbook
+make flywheel-help              # the data-flywheel CLI
+
+# macOS (development / smoke only)
+./scripts/setup_mac.sh && make smoke
 ```
 
-Then follow [docs/phase_b_commands.md](docs/phase_b_commands.md) step by
-step (demo collection → G1 experts → BC → PPO → full eval matrix).
-Docker alternative: `docker build -f docker/Dockerfile.cu128 -t xembench .`
-and run with `--gpus all -e NVIDIA_DRIVER_CAPABILITIES=all`.
-
-## Common commands
-
-```bash
-make test                  # fast sim-free suite (~10 s)
-make test-sim              # integration tests, real envs on CPU sim (~10 s)
-make check                 # create all 6 envs, validate pinned constants
-make mac-check             # environment report (OS/torch/backends/ManiSkill)
-make toy-report            # analysis pipeline on labeled synthetic data
-make artifact-pack-toy     # full artifact pack from synthetic data (rehearses Phase B packaging)
-make artifact-pack-help    # how to pack real Phase B results
-make smoke                 # everything above chained + BC/PPO/eval smokes
-
-uv run python -m xembench.scripts.setup_check
-uv run python -m xembench.scripts.train_bc --config configs/bc.yaml --set task=pick_cube_arm
-uv run python -m xembench.scripts.evaluate --config configs/eval_matrix.yaml
-uv run python -m xembench.analysis.summarize_results --input data/results/eval_episodes.csv --out reports/summary.md
-```
-
-Every script accepts `--seed N` and repeatable `--set key=value` overrides;
-run dirs receive a config dump + git SHA. Presets for common runs live in
-`configs/presets/` (see [docs/configs.md](docs/configs.md)).
+Common entry points: `make test` / `make test-sim` / `make check` ·
+train `uv run python -m xembench.scripts.train_bc --config configs/presets/bc_train_full.yaml --set task=pick_cube_arm --set chunk=8` ·
+evaluate `uv run python -m xembench.scripts.evaluate --config configs/presets/full_eval_matrix.yaml`.
+Every script takes `--seed` and `--set key=value`; presets live in
+`configs/presets/`.
 
 ## Repository structure
 
@@ -114,82 +151,49 @@ src/xembench/
   constants.py     canonical action/proprio layout, pinned joint orders (source of truth)
   embodiment/      EmbodimentAdapter base + panda/panda_stick/g1 + registry
   envs/            factory, UnifiedObsWrapper, custom *Lang-v1 envs
-  language/        templates, paraphrase split, tokenizer + vocab.json, parser
-  data/            HDF5 schema/writer/validator, DemoDataset, HF converter
-  experts/         motion-planning collector (Linux), PPO-expert loader
-  models/          encoders, BCPolicy, actor-critics, diffusion stub
-  training/        BC trainer, CleanRL PPO (expert + fine-tune modes)
-  eval/            episode runner (Wilson CIs), eval matrix, table report
-  analysis/        failure taxonomy, episode-CSV tools, transfer matrix
-  scripts/         python -m xembench.scripts.<entrypoint>
-configs/           tasks.yaml registry, per-stage defaults, presets/
-docs/              architecture, canonical space, tasks, metrics, Phase B plan
-tests/             fast suite + `-m sim` integration suite
-reports/, outputs/, artifacts/   generated summaries / scratch / media (gitignored payloads)
+  language/        templates, paraphrase split, tokenizer, parser
+  data/            HDF5 schema/writer/validator, DemoDataset (chunked), HF converter
+  experts/         motion-planning collector (mplib), PPO-expert loader
+  models/          encoders, BCPolicy (+action chunking), actor-critics
+  training/        BC trainer, CleanRL PPO (target-KL, warm start, env_kwargs)
+  eval/            episode runner (chunk queues/ensembling, Wilson CIs), matrix
+  analysis/        failure taxonomy, episode CSVs, transfer matrix, video index
+  flywheel/        schemas, dataset index/validation/cards, candidates,
+                   selection strategies, round comparison, flywheel packs
+configs/           tasks.yaml registry (horizons = demo p95), presets/
+docs/              architecture, canonical space, plans, runbooks, flywheel specs
+reports/           campaign reports + generated summaries
+artifacts/         packs, videos (INDEX.md tracked), media
 ```
-
-## Expected outputs
-
-| Producer | Output |
-|---|---|
-| demo collection | `data/demos/{embodiment}/{env_id}/{source}.h5` |
-| training | `data/checkpoints/<run>/{best.pt,last.pt,config.yaml,tb/}` |
-| evaluation | `data/results/eval.csv` (aggregate) + `data/results/eval_episodes.csv` (per episode) + printed tables |
-| analysis | `reports/*.md`, `reports/*.csv` summaries |
-| artifact packer | `artifacts/releases/<name>/` — manifest, metrics, figures, project-page assets, checksums ([docs/artifact_packs.md](docs/artifact_packs.md)) |
 
 ## Interpreting results
 
-Aggregate rows carry `success_rate` with 95% Wilson CIs; `task` is the
-training task, `eval_task` the evaluation task — rows where they differ are
-transfer cells. The headline metric is the **transfer drop**
-`SR_native − SR_transfer` for the pairs pick_cube_arm ↔ apple_bowl_g1 and
-stack_cube_arm ↔ transport_box_g1; paraphrase robustness and unseen-color
-deltas are the secondary axes. Full column definitions and formulas:
-[docs/metrics.md](docs/metrics.md). Smoke-run CSVs contain ~0% success
-rates by design (tiny data/training) — they verify plumbing, not policies.
+`data/results/eval.csv`: `task` = training task, `eval_task` = evaluation
+task; rows where they differ are transfer cells. Headline metric:
+**transfer drop** `SR_native − SR_transfer` on pick_cube↔apple_bowl and
+stack_cube↔transport_box; paraphrase and unseen-color deltas are the
+secondary axes. Definitions: [docs/metrics.md](docs/metrics.md).
 
-## Documentation
+## Limitations
 
-[architecture](docs/architecture.md) ·
-[canonical action space](docs/canonical_action_space.md) ·
-[tasks](docs/tasks.md) · [language splits](docs/language_splits.md) ·
-[metrics](docs/metrics.md) · [configs](docs/configs.md) ·
-[Phase A status](docs/phase_a_status.md) ·
-[Phase B plan](docs/phase_b_linux_plan.md) ·
-[Phase B commands](docs/phase_b_commands.md) ·
-[report outline](docs/report_outline.md) ·
-[data flywheel](docs/physical_ai_data_flywheel.md) ·
-[project page](docs/project_page.md) · [roadmap](docs/roadmap.md) ·
-[references](docs/references.md) ·
-[application summary](docs/application_summary.md) ·
-[CONTRIBUTING](CONTRIBUTING.md)
-
-## Current limitations
-
-Hand-designed canonical interface (kinematic aliasing between bodies is
-real and documented); analogous rather than identical transfer tasks;
-camera viewpoint differs across embodiments (ablatable — the G1 exposes a
-third-person camera too); small closed-vocabulary language distribution;
-simulation only; two embodiments. See
-[docs/canonical_action_space.md](docs/canonical_action_space.md) for the
-full list and the adapter extension path (Isaac Lab / LeRobot / real
-hardware are out of scope for now but the adapter seam is designed for
-them).
+Hand-designed canonical interface (kinematic aliasing documented);
+analogous rather than identical transfer pairs; two embodiments;
+128-px closed-vocabulary sim-only setting; BC baselines below the
+transfer-measurement threshold on precision tasks (the study above) —
+transformer-class baselines are the designed next step, and the adapter
+seam is built for more bodies (Isaac Lab / LeRobot / hardware).
 
 ## Citation
-
-Placeholder — no write-up exists yet. If you build on the benchmark design,
-cite this repository:
 
 ```bibtex
 @misc{xembench2026,
   title  = {xembench: An X-Embodiment Language-Grounded Manipulation Benchmark},
-  author = {Jangara},
+  author = {Jangara Bliss},
   year   = {2026},
-  note   = {https://github.com/Janga786/xembench (Phase A.5, pre-results)}
+  note   = {https://github.com/Janga786/xembench}
 }
 ```
 
-Built on [ManiSkill3](https://github.com/haosulab/ManiSkill) (Mu et al.) —
-cite it for the simulator, tasks, and demo datasets.
+Built on [ManiSkill3](https://github.com/haosulab/ManiSkill) (Mu et al.);
+action chunking follows Zhao et al., *Learning Fine-Grained Bimanual
+Manipulation with Low-Cost Hardware* (ACT), 2023.
