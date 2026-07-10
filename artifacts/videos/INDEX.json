@@ -1,18 +1,303 @@
 {
  "schema_version": 1,
  "root": "videos",
- "n_videos": 0,
- "videos": [],
+ "n_videos": 11,
+ "videos": [
+  {
+   "task": "pick_cube_arm",
+   "embodiment": "panda",
+   "policy": "bc",
+   "split": "canonical",
+   "seed": "100000",
+   "result": "failure_timeout",
+   "file": "raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4",
+   "well_named": true
+  },
+  {
+   "task": "pick_cube_arm",
+   "embodiment": "panda",
+   "policy": "bc",
+   "split": "unseen_color",
+   "seed": "100000",
+   "result": "failure_timeout",
+   "file": "raw/pick_cube_arm__panda__bc__unseen_color__100000__failure_timeout.mp4",
+   "well_named": true
+  },
+  {
+   "task": "pick_cube_arm",
+   "embodiment": "panda",
+   "policy": "expert",
+   "split": "canonical",
+   "seed": "0",
+   "result": "success",
+   "file": "raw/pick_cube_arm__panda__expert__canonical__0__success.mp4",
+   "well_named": true
+  },
+  {
+   "task": "push_t_arm",
+   "embodiment": "panda_stick",
+   "policy": "bc",
+   "split": "canonical",
+   "seed": "100001",
+   "result": "success",
+   "file": "raw/push_t_arm__panda_stick__bc__canonical__100001__success.mp4",
+   "well_named": true
+  },
+  {
+   "task": "push_t_arm",
+   "embodiment": "panda_stick",
+   "policy": "bc",
+   "split": "canonical",
+   "seed": "100002",
+   "result": "success",
+   "file": "raw/push_t_arm__panda_stick__bc__canonical__100002__success.mp4",
+   "well_named": true
+  },
+  {
+   "task": "push_t_arm",
+   "embodiment": "panda_stick",
+   "policy": "bc",
+   "split": "heldout",
+   "seed": "100008",
+   "result": "success",
+   "file": "raw/push_t_arm__panda_stick__bc__heldout__100008__success.mp4",
+   "well_named": true
+  },
+  {
+   "task": "stack_cube_arm",
+   "embodiment": "panda",
+   "policy": "expert",
+   "split": "canonical",
+   "seed": "0",
+   "result": "success",
+   "file": "raw/stack_cube_arm__panda__expert__canonical__0__success.mp4",
+   "well_named": true
+  },
+  {
+   "task": "transport_box_g1",
+   "embodiment": "g1",
+   "policy": "bc",
+   "split": "canonical",
+   "seed": "100011",
+   "result": "failure_timeout",
+   "file": "raw/transport_box_g1__g1__bc__canonical__100011__failure_timeout.mp4",
+   "well_named": true
+  },
+  {
+   "task": "transport_box_g1",
+   "embodiment": "g1",
+   "policy": "bc",
+   "split": "canonical",
+   "seed": "100012",
+   "result": "failure_timeout",
+   "file": "raw/transport_box_g1__g1__bc__canonical__100012__failure_timeout.mp4",
+   "well_named": true
+  },
+  {
+   "task": "transport_box_g1",
+   "embodiment": "g1",
+   "policy": "bc",
+   "split": "canonical",
+   "seed": "100022",
+   "result": "success",
+   "file": "raw/transport_box_g1__g1__bc__canonical__100022__success.mp4",
+   "well_named": true
+  },
+  {
+   "task": "transport_box_g1",
+   "embodiment": "g1",
+   "policy": "expert",
+   "split": "canonical",
+   "seed": "0",
+   "result": "success",
+   "file": "raw/transport_box_g1__g1__expert__canonical__0__success.mp4",
+   "well_named": true
+  }
+ ],
  "groups": {
-  "task": {},
-  "embodiment": {},
-  "policy": {},
-  "split": {},
-  "result": {}
+  "task": {
+   "pick_cube_arm": [
+    "raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4",
+    "raw/pick_cube_arm__panda__bc__unseen_color__100000__failure_timeout.mp4",
+    "raw/pick_cube_arm__panda__expert__canonical__0__success.mp4"
+   ],
+   "push_t_arm": [
+    "raw/push_t_arm__panda_stick__bc__canonical__100001__success.mp4",
+    "raw/push_t_arm__panda_stick__bc__canonical__100002__success.mp4",
+    "raw/push_t_arm__panda_stick__bc__heldout__100008__success.mp4"
+   ],
+   "stack_cube_arm": [
+    "raw/stack_cube_arm__panda__expert__canonical__0__success.mp4"
+   ],
+   "transport_box_g1": [
+    "raw/transport_box_g1__g1__bc__canonical__100011__failure_timeout.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100012__failure_timeout.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100022__success.mp4",
+    "raw/transport_box_g1__g1__expert__canonical__0__success.mp4"
+   ]
+  },
+  "embodiment": {
+   "g1": [
+    "raw/transport_box_g1__g1__bc__canonical__100011__failure_timeout.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100012__failure_timeout.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100022__success.mp4",
+    "raw/transport_box_g1__g1__expert__canonical__0__success.mp4"
+   ],
+   "panda": [
+    "raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4",
+    "raw/pick_cube_arm__panda__bc__unseen_color__100000__failure_timeout.mp4",
+    "raw/pick_cube_arm__panda__expert__canonical__0__success.mp4",
+    "raw/stack_cube_arm__panda__expert__canonical__0__success.mp4"
+   ],
+   "panda_stick": [
+    "raw/push_t_arm__panda_stick__bc__canonical__100001__success.mp4",
+    "raw/push_t_arm__panda_stick__bc__canonical__100002__success.mp4",
+    "raw/push_t_arm__panda_stick__bc__heldout__100008__success.mp4"
+   ]
+  },
+  "policy": {
+   "bc": [
+    "raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4",
+    "raw/pick_cube_arm__panda__bc__unseen_color__100000__failure_timeout.mp4",
+    "raw/push_t_arm__panda_stick__bc__canonical__100001__success.mp4",
+    "raw/push_t_arm__panda_stick__bc__canonical__100002__success.mp4",
+    "raw/push_t_arm__panda_stick__bc__heldout__100008__success.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100011__failure_timeout.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100012__failure_timeout.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100022__success.mp4"
+   ],
+   "expert": [
+    "raw/pick_cube_arm__panda__expert__canonical__0__success.mp4",
+    "raw/stack_cube_arm__panda__expert__canonical__0__success.mp4",
+    "raw/transport_box_g1__g1__expert__canonical__0__success.mp4"
+   ]
+  },
+  "split": {
+   "canonical": [
+    "raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4",
+    "raw/pick_cube_arm__panda__expert__canonical__0__success.mp4",
+    "raw/push_t_arm__panda_stick__bc__canonical__100001__success.mp4",
+    "raw/push_t_arm__panda_stick__bc__canonical__100002__success.mp4",
+    "raw/stack_cube_arm__panda__expert__canonical__0__success.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100011__failure_timeout.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100012__failure_timeout.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100022__success.mp4",
+    "raw/transport_box_g1__g1__expert__canonical__0__success.mp4"
+   ],
+   "heldout": [
+    "raw/push_t_arm__panda_stick__bc__heldout__100008__success.mp4"
+   ],
+   "unseen_color": [
+    "raw/pick_cube_arm__panda__bc__unseen_color__100000__failure_timeout.mp4"
+   ]
+  },
+  "result": {
+   "failure_timeout": [
+    "raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4",
+    "raw/pick_cube_arm__panda__bc__unseen_color__100000__failure_timeout.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100011__failure_timeout.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100012__failure_timeout.mp4"
+   ],
+   "success": [
+    "raw/pick_cube_arm__panda__expert__canonical__0__success.mp4",
+    "raw/push_t_arm__panda_stick__bc__canonical__100001__success.mp4",
+    "raw/push_t_arm__panda_stick__bc__canonical__100002__success.mp4",
+    "raw/push_t_arm__panda_stick__bc__heldout__100008__success.mp4",
+    "raw/stack_cube_arm__panda__expert__canonical__0__success.mp4",
+    "raw/transport_box_g1__g1__bc__canonical__100022__success.mp4",
+    "raw/transport_box_g1__g1__expert__canonical__0__success.mp4"
+   ]
+  }
  },
  "demo_planning": {
-  "cross_embodiment_pairs": [],
-  "paraphrase_sets": []
+  "cross_embodiment_pairs": [
+   {
+    "left": "raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4",
+    "right": "raw/push_t_arm__panda_stick__bc__canonical__100001__success.mp4",
+    "reason": "cross-embodiment (panda vs panda_stick), matched policy=bc split=canonical"
+   },
+   {
+    "left": "raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4",
+    "right": "raw/push_t_arm__panda_stick__bc__canonical__100002__success.mp4",
+    "reason": "cross-embodiment (panda vs panda_stick), matched policy=bc split=canonical"
+   },
+   {
+    "left": "raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4",
+    "right": "raw/transport_box_g1__g1__bc__canonical__100011__failure_timeout.mp4",
+    "reason": "cross-embodiment (panda vs g1), matched policy=bc split=canonical"
+   },
+   {
+    "left": "raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4",
+    "right": "raw/transport_box_g1__g1__bc__canonical__100012__failure_timeout.mp4",
+    "reason": "cross-embodiment (panda vs g1), matched policy=bc split=canonical"
+   },
+   {
+    "left": "raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4",
+    "right": "raw/transport_box_g1__g1__bc__canonical__100022__success.mp4",
+    "reason": "cross-embodiment (panda vs g1), matched policy=bc split=canonical"
+   },
+   {
+    "left": "raw/pick_cube_arm__panda__expert__canonical__0__success.mp4",
+    "right": "raw/transport_box_g1__g1__expert__canonical__0__success.mp4",
+    "reason": "cross-embodiment (panda vs g1), matched policy=expert split=canonical"
+   },
+   {
+    "left": "raw/push_t_arm__panda_stick__bc__canonical__100001__success.mp4",
+    "right": "raw/transport_box_g1__g1__bc__canonical__100011__failure_timeout.mp4",
+    "reason": "cross-embodiment (panda_stick vs g1), matched policy=bc split=canonical"
+   },
+   {
+    "left": "raw/push_t_arm__panda_stick__bc__canonical__100001__success.mp4",
+    "right": "raw/transport_box_g1__g1__bc__canonical__100012__failure_timeout.mp4",
+    "reason": "cross-embodiment (panda_stick vs g1), matched policy=bc split=canonical"
+   },
+   {
+    "left": "raw/push_t_arm__panda_stick__bc__canonical__100001__success.mp4",
+    "right": "raw/transport_box_g1__g1__bc__canonical__100022__success.mp4",
+    "reason": "cross-embodiment (panda_stick vs g1), matched policy=bc split=canonical"
+   },
+   {
+    "left": "raw/push_t_arm__panda_stick__bc__canonical__100002__success.mp4",
+    "right": "raw/transport_box_g1__g1__bc__canonical__100011__failure_timeout.mp4",
+    "reason": "cross-embodiment (panda_stick vs g1), matched policy=bc split=canonical"
+   },
+   {
+    "left": "raw/push_t_arm__panda_stick__bc__canonical__100002__success.mp4",
+    "right": "raw/transport_box_g1__g1__bc__canonical__100012__failure_timeout.mp4",
+    "reason": "cross-embodiment (panda_stick vs g1), matched policy=bc split=canonical"
+   },
+   {
+    "left": "raw/push_t_arm__panda_stick__bc__canonical__100002__success.mp4",
+    "right": "raw/transport_box_g1__g1__bc__canonical__100022__success.mp4",
+    "reason": "cross-embodiment (panda_stick vs g1), matched policy=bc split=canonical"
+   },
+   {
+    "left": "raw/stack_cube_arm__panda__expert__canonical__0__success.mp4",
+    "right": "raw/transport_box_g1__g1__expert__canonical__0__success.mp4",
+    "reason": "cross-embodiment (panda vs g1), matched policy=expert split=canonical"
+   }
+  ],
+  "paraphrase_sets": [
+   {
+    "task": "pick_cube_arm",
+    "embodiment": "panda",
+    "policy": "bc",
+    "videos": [
+     "raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4",
+     "raw/pick_cube_arm__panda__bc__unseen_color__100000__failure_timeout.mp4"
+    ]
+   },
+   {
+    "task": "push_t_arm",
+    "embodiment": "panda_stick",
+    "policy": "bc",
+    "videos": [
+     "raw/push_t_arm__panda_stick__bc__canonical__100001__success.mp4",
+     "raw/push_t_arm__panda_stick__bc__canonical__100002__success.mp4",
+     "raw/push_t_arm__panda_stick__bc__heldout__100008__success.mp4"
+    ]
+   }
+  ]
  },
  "unparsed": []
 }
