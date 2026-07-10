@@ -38,7 +38,7 @@ SECTIONS = [
     ("*dataset_card*", "."),
     ("*validation_report*", "."),
     ("*failure_report*", "."),
-    ("model_card_placeholder*", "."),
+    ("*model_card*", "."),          # placeholder and filled (real) cards
     ("*_vs_*", "."),                       # round comparisons
     ("*candidates*", "candidates"),
     ("*selection_plan*", "plans"),

@@ -141,16 +141,25 @@ def build_model_card_placeholder(*, model_name: str,
 
 
 def model_card_markdown(mc: ModelCardPlaceholder) -> str:
-    lines = [
-        f"# Model card (PLACEHOLDER) — {mc.model_name}", "",
-        "> **PLACEHOLDER — no trained model, no metrics.** This card is "
-        "generated so the flywheel pack has a stable slot for real Linux "
-        "results; every metric field is intentionally empty.", "",
+    if mc.is_placeholder:
+        lines = [
+            f"# Model card (PLACEHOLDER) — {mc.model_name}", "",
+            "> **PLACEHOLDER — no trained model, no metrics.** This card is "
+            "generated so the flywheel pack has a stable slot for real Linux "
+            "results; every metric field is intentionally empty.", "",
+        ]
+        metric_lines = ["- metrics: none (placeholder)"]
+    else:
+        lines = [f"# Model card — {mc.model_name}", ""]
+        metric_lines = (["- metrics:"]
+                        + [f"  - {k}: {v}" for k, v in sorted(mc.metrics.items())]
+                        if mc.metrics else ["- metrics: none reported"])
+    lines += [
         f"- policy type: {mc.policy_type or 'tbd'}",
         f"- training dataset: {mc.training_dataset or 'tbd'}",
         f"- train embodiment: {mc.embodiment_train or 'tbd'}",
         f"- eval embodiment: {mc.embodiment_eval or 'tbd'}",
-        f"- metrics: none (placeholder)", "",
+        *metric_lines, "",
         "## Limitations", "",
     ]
     lines += [f"- {x}" for x in mc.limitations]

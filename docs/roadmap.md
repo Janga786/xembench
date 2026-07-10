@@ -77,17 +77,28 @@ executed), deterministic toy round, flywheel artifact packs on the
 existing synthetic rails. `make flywheel-mac-check` green; toy data only —
 **no flywheel results exist**.
 
-**E.2 — first real round (Linux, after Phase B core)** — ⏳ blocked on B:
+**E.2 — first real round (Linux) — ✅ completed 2026-07-09**
+(see [reports/phase_b_campaign_report.md](../reports/phase_b_campaign_report.md) §4):
 
-- [ ] index + validate the round-0 dataset (`--deep-h5`, zero criticals)
-- [ ] candidates + failure_targeted/random selection from real eval
-      failures ([flywheel_linux_plan.md](flywheel_linux_plan.md))
-- [ ] collect both arms' data; validate before training
-- [ ] MVP experiment: baseline / +random / +failure-targeted
-      (+noisy / +filtered second pass) — pre-registered design in
-      [flywheel_experiments.md](flywheel_experiments.md)
-- [ ] compare rounds WITH CIs; first non-synthetic flywheel pack; fill
-      the model card
+- [x] round-0 dataset indexed (7,752 records) + deep-validated, zero
+      critical findings
+- [x] 180 candidates from 6,155 real eval failures;
+      failure_targeted (pick 20 / stack 20 / apple 10) vs random arms at an
+      equal 50-episode budget
+- [x] both arms collected with round-0 generators (baseline files
+      protected), validated before training; 9 arm-isolated BC retrains
+- [x] full 6-task matrix per arm; per-cell comparison vs round 0 —
+      **informative null at this budget** (overall Δ +0.11 / −0.28 pts,
+      inside CIs); seed-matched comparison established as the standard
+      after pooled-vs-single-seed produced ±5–9 pt phantom swings
+- [x] first non-synthetic flywheel pack
+      (`artifacts/releases/flywheel_round1`) with filled per-arm model
+      cards
+- [ ] noisy / filtered second-pass arms
+      ([flywheel_experiments.md](flywheel_experiments.md)) — deferred to
+      round 2 along with: larger budgets, targeting the improvable
+      mid-range tasks (transport, push_t), and pairing data addition with
+      a compounding-error intervention
 
 **E.3 — later** — richer failure labels feeding sharper targeting (needs
 the Phase B runner instrumentation above), learned acquisition baselines,
