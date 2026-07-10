@@ -274,7 +274,8 @@ def train_ppo_visual(cfg: dict) -> Path:
     writer = SummaryWriter(out_dir / "tb")
 
     raw = make_env(task["env_id"], num_envs=cfg["num_envs"], obs_mode="rgb",
-                   reward_mode="sparse", **(cfg.get("env_kwargs") or {}))
+                   reward_mode=cfg.get("reward_mode", "sparse"),
+                   **(cfg.get("env_kwargs") or {}))
     vec = ManiSkillVectorEnv(raw, auto_reset=True, ignore_terminations=False)
     envs = UnifiedObsWrapper(
         vec, adapter, task["camera"], task["family"], static_slots=task.get("slots"),

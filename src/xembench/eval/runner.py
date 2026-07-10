@@ -100,26 +100,52 @@ def evaluate_policy(
     )
 
 
-def bc_policy_fn(model, device):
+def bc_policy_fn(model, device, ensemble: bool = False, ensemble_m: float = 0.1):
     """Wrap a BCPolicy into the runner's policy interface.
 
-    Chunked policies (model.chunk > 1) predict `chunk` actions at once and
-    execute them open-loop: one network call fills a queue, later steps pop
-    from it, and the policy re-predicts when the queue empties. The runner
-    clears the queue between episodes via the `.reset` attribute."""
+    Chunked policies (model.chunk > 1) predict `chunk` actions at once.
+    Two execution modes (Zhao et al. 2023):
+    - plain: one network call fills a queue, later steps pop from it, and
+      the policy re-predicts when the queue empties;
+    - temporal ensembling (``ensemble=True``): predict EVERY step and
+      execute the weighted average of all overlapping chunk predictions
+      for the current timestep, weights exp(-m * age) favouring the oldest
+      prediction (temporal consistency smooths per-chunk errors).
+    The runner clears state between episodes via the `.reset` attribute."""
     from xembench.utils.torch_utils import to_device
 
     queue: list[torch.Tensor] = []
+    buffers: dict[int, list[torch.Tensor]] = {}
+    step = [0]
 
-    def policy(obs: dict) -> torch.Tensor:
-        if getattr(model, "chunk", 1) > 1:
-            if not queue:
-                batch = {k: v for k, v in obs.items() if torch.is_tensor(v)}
-                pred = model(to_device(batch, device)).cpu()  # [1, chunk, A]
-                queue.extend(pred[:, i] for i in range(pred.shape[1]))
-            return queue.pop(0)
+    def predict(obs) -> torch.Tensor:
         batch = {k: v for k, v in obs.items() if torch.is_tensor(v)}
         return model(to_device(batch, device)).cpu()
 
-    policy.reset = queue.clear
+    def policy(obs: dict) -> torch.Tensor:
+        k = getattr(model, "chunk", 1)
+        if k > 1 and ensemble:
+            t = step[0]
+            pred = predict(obs)  # [1, k, A]
+            for i in range(k):
+                buffers.setdefault(t + i, []).append(pred[0, i])
+            preds = buffers.pop(t)  # oldest first
+            w = torch.exp(-ensemble_m
+                          * torch.arange(len(preds), dtype=torch.float32))
+            w = w / w.sum()
+            step[0] += 1
+            return (torch.stack(preds) * w.unsqueeze(1)).sum(0, keepdim=True)
+        if k > 1:
+            if not queue:
+                pred = predict(obs)
+                queue.extend(pred[:, i] for i in range(pred.shape[1]))
+            return queue.pop(0)
+        return predict(obs)
+
+    def reset():
+        queue.clear()
+        buffers.clear()
+        step[0] = 0
+
+    policy.reset = reset
     return policy
