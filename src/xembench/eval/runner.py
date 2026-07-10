@@ -100,7 +100,8 @@ def evaluate_policy(
     )
 
 
-def bc_policy_fn(model, device, ensemble: bool = False, ensemble_m: float = 0.1):
+def bc_policy_fn(model, device, ensemble: bool = False, ensemble_m: float = 0.1,
+                 exec_horizon: int | None = None, snap_gripper: bool = False):
     """Wrap a BCPolicy into the runner's policy interface.
 
     Chunked policies (model.chunk > 1) predict `chunk` actions at once.
@@ -111,7 +112,22 @@ def bc_policy_fn(model, device, ensemble: bool = False, ensemble_m: float = 0.1)
       execute the weighted average of all overlapping chunk predictions
       for the current timestep, weights exp(-m * age) favouring the oldest
       prediction (temporal consistency smooths per-chunk errors).
-    The runner clears state between episodes via the `.reset` attribute."""
+    ``exec_horizon`` (receding horizon) executes only the first n actions
+    of each chunk before re-predicting — more visual re-anchoring without
+    ensemble averaging. ``snap_gripper`` binarizes the canonical gripper
+    dims to ±1 at execution: the demos command decisive open/close and the
+    mimic controllers half-open on intermediate values, which mushes
+    grasps. The runner clears state between episodes via `.reset`."""
+    from xembench.constants import CANON_ACTION_SLOTS
+
+    grip_idx = [CANON_ACTION_SLOTS["right_gripper"].start,
+                CANON_ACTION_SLOTS["left_gripper"].start]
+
+    def postprocess(a: torch.Tensor) -> torch.Tensor:
+        if snap_gripper:
+            a = a.clone()
+            a[..., grip_idx] = torch.where(a[..., grip_idx] >= 0, 1.0, -1.0)
+        return a
     from xembench.utils.torch_utils import to_device
 
     queue: list[torch.Tensor] = []
@@ -134,13 +150,15 @@ def bc_policy_fn(model, device, ensemble: bool = False, ensemble_m: float = 0.1)
                           * torch.arange(len(preds), dtype=torch.float32))
             w = w / w.sum()
             step[0] += 1
-            return (torch.stack(preds) * w.unsqueeze(1)).sum(0, keepdim=True)
+            return postprocess(
+                (torch.stack(preds) * w.unsqueeze(1)).sum(0, keepdim=True))
         if k > 1:
             if not queue:
                 pred = predict(obs)
-                queue.extend(pred[:, i] for i in range(pred.shape[1]))
-            return queue.pop(0)
-        return predict(obs)
+                n = min(exec_horizon or k, k)
+                queue.extend(pred[:, i] for i in range(n))
+            return postprocess(queue.pop(0))
+        return postprocess(predict(obs))
 
     def reset():
         queue.clear()

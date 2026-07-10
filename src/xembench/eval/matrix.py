@@ -89,8 +89,10 @@ def run_matrix(cfg: dict) -> dict[str, list[dict]]:
                     if spec.get("optional", False):
                         continue
                     raise
-                policy_fn = bc_policy_fn(model, device,
-                                         ensemble=spec.get("ensemble", False))
+                policy_fn = bc_policy_fn(
+                    model, device, ensemble=spec.get("ensemble", False),
+                    exec_horizon=spec.get("exec_horizon"),
+                    snap_gripper=spec.get("snap_gripper", False))
                 base = dict(
                     policy_type=spec["type"], task=task_name,
                     train_embodiment=task["embodiment"], seed=seed, checkpoint=ckpt,
