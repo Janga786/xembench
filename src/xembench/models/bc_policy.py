@@ -26,7 +26,13 @@ class BCPolicy(nn.Module):
         d_lang: int = 128,
         d_prop: int = 128,
         hidden: int = 512,
+        chunk: int = 1,
     ):
+        """chunk > 1 predicts the next `chunk` actions from one observation
+        (action chunking, Zhao et al. 2023): open-loop execution within a
+        chunk stops per-step imitation error from compounding — the failure
+        mode that zeroed the precision tasks at chunk=1. chunk=1 is exactly
+        the original single-step policy (checkpoint compatible)."""
         super().__init__()
         self.vision = VISION_ENCODERS[vision](d_vis)
         self.lang = InstructionEncoder(vocab_size, out_dim=d_lang)
@@ -36,7 +42,8 @@ class BCPolicy(nn.Module):
             nn.Linear(fused, hidden), nn.ReLU(),
             nn.Linear(hidden, hidden), nn.ReLU(),
         )
-        self.head = nn.Linear(hidden, A_CANON)
+        self.chunk = chunk
+        self.head = nn.Linear(hidden, chunk * A_CANON)
         self.hidden_dim = hidden
 
     def encode(self, obs: dict) -> torch.Tensor:
@@ -50,13 +57,21 @@ class BCPolicy(nn.Module):
         return self.trunk(torch.cat(parts, dim=-1))
 
     def forward(self, obs: dict) -> torch.Tensor:
-        """-> canonical action [B, A_CANON] in [-1, 1]."""
-        return torch.tanh(self.head(self.encode(obs)))
+        """-> canonical action(s) in [-1, 1]: [B, A_CANON] when chunk == 1,
+        [B, chunk, A_CANON] otherwise."""
+        out = torch.tanh(self.head(self.encode(obs)))
+        if self.chunk > 1:
+            return out.view(-1, self.chunk, A_CANON)
+        return out
 
 
 def masked_bc_loss(
     pred: torch.Tensor, target: torch.Tensor, action_mask: torch.Tensor
 ) -> torch.Tensor:
-    """SmoothL1 restricted to the embodiment's active canonical dims."""
+    """SmoothL1 restricted to the embodiment's active canonical dims.
+    Accepts [B, A] (single-step) or [B, chunk, A] (chunked) pred/target."""
     loss = F.smooth_l1_loss(pred, target, reduction="none", beta=0.05)
-    return (loss * action_mask).sum() / action_mask.sum().clamp(min=1)
+    if loss.dim() == 3:
+        action_mask = action_mask.unsqueeze(1)
+    mask = action_mask.expand_as(loss)
+    return (loss * mask).sum() / mask.sum().clamp(min=1)

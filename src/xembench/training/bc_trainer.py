@@ -61,6 +61,7 @@ def train_bc(cfg: dict) -> dict:
         instruction_mode="train" if cfg.get("paraphrase_augment", True) else "canonical",
         paraphrase_p=cfg.get("paraphrase_p", 0.7),
         preload=cfg.get("preload", False),
+        chunk=cfg.get("chunk", 1),
     )
     train_set, val_set = split_by_episode(dataset, cfg.get("val_fraction", 0.1),
                                           seed=cfg["seed"])
@@ -72,7 +73,8 @@ def train_bc(cfg: dict) -> dict:
     val_loader = DataLoader(val_set, shuffle=False, **loader_kwargs)
 
     model = BCPolicy(
-        vocab_size=len(get_tokenizer()), vision=cfg.get("vision", "nature_cnn")
+        vocab_size=len(get_tokenizer()), vision=cfg.get("vision", "nature_cnn"),
+        chunk=cfg.get("chunk", 1),
     ).to(device)
     print(f"BCPolicy[{cfg.get('vision', 'nature_cnn')}] params: {count_params(model):,} "
           f"| train {len(train_set)} val {len(val_set)} transitions | device {device}")

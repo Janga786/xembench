@@ -30,12 +30,15 @@ class DemoDataset(Dataset):
         paraphrase_p: float = 0.7,
         success_only: bool = True,
         preload: bool = False,
+        chunk: int = 1,
     ):
         assert instruction_mode in ("train", "canonical")
+        assert chunk >= 1
         self.paths = [str(p) for p in paths]
         self.instruction_mode = instruction_mode
         self.paraphrase_p = paraphrase_p
         self.preload = preload
+        self.chunk = chunk
         self.tokenizer = get_tokenizer()
         self._h5: dict[int, h5py.File] = {}
         self._cache: dict[tuple[int, str], dict] | None = {} if preload else None
@@ -59,8 +62,8 @@ class DemoDataset(Dataset):
                         action_mask=adapter.action_mask.numpy(),
                         proprio_mask=adapter.proprio_mask.numpy(),
                     )
+                    meta["episode_len"] = T = int(ep.attrs["episode_len"])
                     self.episode_meta[(fi, key)] = meta
-                    T = int(ep.attrs["episode_len"])
                     self.index += [(fi, key, t) for t in range(T)]
                     if self.preload:
                         self._cache[(fi, key)] = dict(
@@ -94,6 +97,20 @@ class DemoDataset(Dataset):
         meta = self.episode_meta[(fi, key)]
         tokens, length = self._instruction_tokens(meta["instruction"])
         rgb = torch.from_numpy(np.asarray(arrays["rgb"][t]))  # [H, W, 3] uint8
+        if self.chunk == 1:
+            action = torch.from_numpy(np.asarray(arrays["action_canon"][t]))
+        else:
+            # action window t..t+chunk-1, padded past the episode end by
+            # repeating the final action: for our control semantics that
+            # holds the arm (small final deltas) and KEEPS the gripper
+            # command (absolute), unlike zero-padding which would open a
+            # closed gripper mid-grasp
+            end = min(t + self.chunk, meta["episode_len"])
+            win = np.asarray(arrays["action_canon"][t:end])
+            if len(win) < self.chunk:
+                pad = np.repeat(win[-1:], self.chunk - len(win), axis=0)
+                win = np.concatenate([win, pad], axis=0)
+            action = torch.from_numpy(win)
         return dict(
             rgb=rgb.permute(2, 0, 1).contiguous(),
             proprio=torch.from_numpy(np.asarray(arrays["proprio"][t])),
@@ -101,7 +118,7 @@ class DemoDataset(Dataset):
             tokens=torch.from_numpy(tokens),
             token_len=torch.tensor(length, dtype=torch.int64),
             embodiment_id=torch.tensor(meta["embodiment_id"], dtype=torch.int64),
-            action=torch.from_numpy(np.asarray(arrays["action_canon"][t])),
+            action=action,
             action_mask=torch.from_numpy(meta["action_mask"]),
         )
 

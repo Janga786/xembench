@@ -43,8 +43,9 @@ def _make_wrapped(task: dict, instruction_cond: str, color_cond: str, seed: int)
     return wrapped, adapter
 
 
-def _load_policy(ckpt: str, vision: str, device) -> BCPolicy:
-    model = BCPolicy(vocab_size=len(get_tokenizer()), vision=vision).to(device)
+def _load_policy(ckpt: str, vision: str, device, chunk: int = 1) -> BCPolicy:
+    model = BCPolicy(vocab_size=len(get_tokenizer()), vision=vision,
+                     chunk=chunk).to(device)
     model.load_state_dict(torch.load(ckpt, map_location=device, weights_only=True))
     model.eval()
     return model
@@ -82,7 +83,8 @@ def run_matrix(cfg: dict) -> dict[str, list[dict]]:
             for seed in cfg["seeds"]:
                 ckpt = resolve_path(spec["ckpt"].format(task=task_name, seed=seed))
                 try:
-                    model = _load_policy(ckpt, cfg.get("vision", "nature_cnn"), device)
+                    model = _load_policy(ckpt, cfg.get("vision", "nature_cnn"),
+                                         device, chunk=spec.get("chunk", 1))
                 except FileNotFoundError:
                     if spec.get("optional", False):
                         continue

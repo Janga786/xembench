@@ -52,6 +52,7 @@ def evaluate_policy(
         episode_seed = seed0 + ep
         t0 = time.perf_counter()
         obs, _ = wrapped_env.reset(seed=episode_seed)
+        getattr(policy, "reset", lambda: None)()  # clear any chunk queue
         instruction = obs["instruction"][0] if "instruction" in obs else ""
         success, was_truncated, return_sum = False, True, 0.0
         for t in range(max_steps):
@@ -100,11 +101,25 @@ def evaluate_policy(
 
 
 def bc_policy_fn(model, device):
-    """Wrap a BCPolicy into the runner's policy interface."""
+    """Wrap a BCPolicy into the runner's policy interface.
+
+    Chunked policies (model.chunk > 1) predict `chunk` actions at once and
+    execute them open-loop: one network call fills a queue, later steps pop
+    from it, and the policy re-predicts when the queue empties. The runner
+    clears the queue between episodes via the `.reset` attribute."""
     from xembench.utils.torch_utils import to_device
 
+    queue: list[torch.Tensor] = []
+
     def policy(obs: dict) -> torch.Tensor:
+        if getattr(model, "chunk", 1) > 1:
+            if not queue:
+                batch = {k: v for k, v in obs.items() if torch.is_tensor(v)}
+                pred = model(to_device(batch, device)).cpu()  # [1, chunk, A]
+                queue.extend(pred[:, i] for i in range(pred.shape[1]))
+            return queue.pop(0)
         batch = {k: v for k, v in obs.items() if torch.is_tensor(v)}
         return model(to_device(batch, device)).cpu()
 
+    policy.reset = queue.clear
     return policy
