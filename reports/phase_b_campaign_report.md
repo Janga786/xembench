@@ -13,7 +13,7 @@ to a checkpoint + config.yaml + git SHA per the repo's provenance rules.
 
 | Artifact | Count / size | Gate |
 |---|---|---|
-| Demonstrations | 6 tasks, 1,002 episodes (200/task arm+PushT, 201/task G1) | `validate_demo_file` clean on all 10 files |
+| Demonstrations | 6 tasks, 1,202 episodes (200/task arm+PushT, 201/task G1) | `validate_demo_file` clean on all 10 files |
 | G1 PPO experts | 2 (apple_bowl, transport_box) + eval tooling | success measured empirically (below) |
 | BC policies | 18 (6 tasks × 3 seeds), zero failed runs | val loss converged on all |
 | PPO fine-tunes | 3 (pick, stack, apple_bowl; seed 0) | ran to budget; see findings |
@@ -113,7 +113,7 @@ old 50-step horizon; documented in their config.yaml.)
 
 ## 4. Flywheel round 1 (first real round)
 
-Round-0 dataset indexed (7,752 records: 1,002 demos + 6,550 eval episodes)
+Round-0 dataset indexed (7,752 records: 1,202 demos + 6,550 eval episodes)
 and deep-validated with zero critical findings. Candidate generation from
 the 6,155 v2 failures produced 180 candidates; two selection arms at an
 equal 50-episode budget:

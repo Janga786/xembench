@@ -84,7 +84,7 @@ the study above. Packs: `artifacts/releases/flywheel_round1`.
 
 ```mermaid
 flowchart LR
-  D[demo generators<br/>mplib planner · PPO experts] -->|HDF5 + schema validation| DS[(1,002-demo<br/>benchmark set<br/>+ 11.6k scaling set)]
+  D[demo generators<br/>mplib planner · PPO experts] -->|HDF5 + schema validation| DS[(1,202-demo<br/>benchmark set<br/>+ 11.6k scaling set)]
   DS --> BC[BC / chunked BC<br/>one network, all bodies]
   BC --> EV[eval matrix<br/>native · paraphrase · color · transfer]
   EV -->|episode CSVs, Wilson CIs| AN[failure taxonomy<br/>transfer matrix · reports]
