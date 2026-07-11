@@ -9,8 +9,9 @@ traceable. Nothing synthetic, nothing projected.**
 
 Trained and evaluated language-conditioned visuomotor policies across a
 Franka Panda arm and a Unitree G1 humanoid on a self-built ManiSkill3
-benchmark: 45.7% success on tool pushing and 18.8% on humanoid box
-transport from pixels+language (73-cell matrix, 3 seeds, Wilson CIs,
+benchmark: 45.7% success on tool pushing, 18.8% on humanoid box transport, and
+an 11× tool-use gain from action chunking (1.3% → 14.7%) from
+pixels+language (73-cell matrix, 3 seeds, Wilson CIs,
 19,400 evaluation episodes) — then ran a systematic intervention study
 (action chunking, temporal ensembling, 50× data scaling, encoder
 capacity, RL fine-tuning) that isolates precision grasping's failure to

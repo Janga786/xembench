@@ -36,8 +36,8 @@ evaluation episode seed.
 |---|---|---:|---:|---|
 | push_t | Panda (stick) | **45.7%** | 46.3% | language grounding robust |
 | transport_box | **G1 humanoid** | **18.8%** | 21.0% | learned from 8.5%-stochastic expert demos |
-| pull_tool | Panda | 1.3% → **8%** | — | after chunking + 10× demos (probe) |
-| pick_cube | Panda | 0% → 4% | — | the open problem (see study below) |
+| pull_tool | Panda | 1.3% → **14.7%** | 15.3% | chunked BC, matrix-grade (3 seeds × 600 eps) |
+| pick_cube | Panda | 0% | 0% | the open problem (see study below) |
 | stack_cube | Panda | 0% | 0% | " |
 | apple_bowl | G1 humanoid | 0% | 0% | thin-demo imitation failure (finding 3) |
 
@@ -60,15 +60,19 @@ demonstration actions through the identical adapter→env path succeeds
 | + 10× demonstrations (2,000) | 0% |
 | + action chunking k=16 (Zhao et al. 2023) | 0% |
 | + temporal ensembling | 0% |
-| **action chunking k=8 + 10× demos** | **4%** |
+| **action chunking k=8 + 10× demos** | **4%** (probe) → 0.2% matrix |
 | + gripper binarization / receding horizon | 4% |
 | + ResNet-18 encoder (4× params) | 0% (overfits) |
 | + 50× demonstrations (10,000) | 2% (flat) |
 | dense-reward visual PPO fine-tune | 0.1% (KL-unstable) |
 
-Diagnosis (instrumented rollouts): reaching is accurate to 2–3 cm and the
-gripper commits fully — failures concentrate in **last-inch grasp
-conversion**, and neither data volume nor execution strategy moves it.
+The same recipe promoted to matrix scale (3 seeds × 100 episodes/cell)
+lifted **pull_tool from 1.3% to 14.7%** — tool use hooks and drags, no
+precision grasp required — while pick/stack stayed ≈0% (the 4% probe was
+single-seed noise). Diagnosis (instrumented rollouts): reaching is accurate
+to 2–3 cm and the gripper commits fully — failures concentrate in
+**last-inch grasp conversion**, and neither data volume nor execution
+strategy moves it.
 The bottleneck is the policy class: single-frame MLP-head BC at 128 px,
 versus the transformer sequence models (ACT, diffusion policies) that
 solve this regime elsewhere. That gap is now this benchmark's central,

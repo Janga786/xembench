@@ -188,6 +188,13 @@ seed 0, canonical/train):
   (`docs/media/pick_scaling.png`); dense-reward visual PPO fine-tune
   0.1% at 460k steps with recurring KL spikes (killed). Side effects:
   pull_tool 1.3% → **8%** (k=8 + 2,000 demos); stack_cube stayed 0%.
+- **Matrix-grade confirmation (night 4):** the k=8 + 2,000-demo recipe
+  trained at 3 seeds and evaluated at 100 episodes/cell
+  (`data/results/eval_chunk.csv`): pull_tool **14.7%** native
+  (held-out paraphrase 15.3%) vs the 1.3% single-step baseline — an 11×
+  gain; pick_cube 0.2% and stack_cube 0.1% — the 4% probe did not
+  replicate across seeds. Chunking + data rescues hook-and-drag tool use;
+  grasp-critical tasks remain at zero.
 - **Conclusion:** with data volume, execution strategy, encoder capacity,
   and RL fine-tuning eliminated under a proven pipeline, the binding
   constraint is the policy class — single-frame MLP-head BC at 128 px vs
