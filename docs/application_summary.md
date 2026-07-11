@@ -1,10 +1,22 @@
 # Application-facing summary
 
 Honest, reusable blurbs for applications, resume, portfolio, and SOP.
-**Ground rule: real benchmark numbers do not exist until Linux Phase B
-completes. Everything below is written to be true TODAY; the placeholder
-section at the bottom is filled only from a real (non-synthetic) artifact
-pack.**
+**Ground rule: every number below comes from a real eval CSV / artifact
+pack in this repo (v0.5.0, 2026-07-09) — checkpoint + config + git SHA
+traceable. Nothing synthetic, nothing projected.**
+
+## Results one-liner (resume bullet)
+
+Trained and evaluated language-conditioned visuomotor policies across a
+Franka Panda arm and a Unitree G1 humanoid on a self-built ManiSkill3
+benchmark: 45.7% success on tool pushing and 18.8% on humanoid box
+transport from pixels+language (73-cell matrix, 3 seeds, Wilson CIs,
+19,400 evaluation episodes) — then ran a systematic intervention study
+(action chunking, temporal ensembling, 50× data scaling, encoder
+capacity, RL fine-tuning) that isolates precision grasping's failure to
+the policy class, with the pipeline exonerated by 5/5 open-loop
+ground-truth replay and a closed-loop data flywheel executed for a real
+targeted-vs-random collection round.
 
 ## 2-sentence pitch
 

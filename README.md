@@ -1,5 +1,11 @@
 # xembench — X-Embodiment Language-Grounded Manipulation Benchmark
 
+[![CI](https://github.com/Janga786/xembench/actions/workflows/ci.yml/badge.svg)](https://github.com/Janga786/xembench/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/tag/Janga786/xembench?label=release)](https://github.com/Janga786/xembench/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Simulator](https://img.shields.io/badge/simulator-ManiSkill3%20%2F%20SAPIEN-orange)
+
 **One language-conditioned policy network. One canonical 21-dim action
 interface. Two robot bodies — a Franka Panda arm and a Unitree G1 humanoid.
 xembench measures exactly how much manipulation skill survives the swap,
@@ -66,8 +72,8 @@ conversion**, and neither data volume nor execution strategy moves it.
 The bottleneck is the policy class: single-frame MLP-head BC at 128 px,
 versus the transformer sequence models (ACT, diffusion policies) that
 solve this regime elsewhere. That gap is now this benchmark's central,
-*quantified* open problem — with 12,800 clean demonstrations per-task
-infrastructure ready for whoever closes it.
+*quantified* open problem — and 12,900 validated demonstrations plus the
+per-task collection infrastructure are staged for whoever closes it.
 
 ## Physical AI Data Flywheel (first real round, executed)
 

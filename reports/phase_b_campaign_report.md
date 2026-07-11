@@ -213,10 +213,13 @@ seed 0, canonical/train):
 ```bash
 # environment (one-time)
 ./scripts/setup_linux.sh
-# phase B end-to-end
-bash data/logs/overnight_driver.sh      # demos -> BC -> B4 -> eval -> pack
+# phase B end-to-end (idempotent; markers under data/logs/)
+bash scripts/campaign/overnight_driver.sh   # demos -> BC -> B4 -> eval -> pack
+bash scripts/campaign/reeval_driver.sh      # eval v2 at corrected horizons
 # flywheel round 1
-bash data/logs/round1_driver.sh
+bash scripts/campaign/round1_driver.sh
+# night-3 scaling ladder
+bash scripts/campaign/night3_driver.sh
 ```
 Checkpoints: `data/checkpoints/` · results: `data/results/` · packs:
 `artifacts/releases/{phase_b_v1,flywheel_round1}` · logs: `data/logs/`.

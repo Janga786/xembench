@@ -3,11 +3,15 @@
 **A trustworthy data-to-policy pipeline for language-grounded robot
 manipulation, built on xembench.**
 
-**Status: Mac foundation complete — schemas, validation, candidate
-generation, selection, planning, and packaging implemented and tested on
-SYNTHETIC toy data only. No real flywheel round has run; no results exist;
-nothing here claims any.** The real collect → train → evaluate loop is
-Linux / RTX 5090 work ([flywheel_linux_plan.md](flywheel_linux_plan.md)).
+**Status: round 1 executed on real data (2026-07-09).** The full loop —
+7,752-record dataset index, deep validation (zero criticals), 180
+candidates from 6,155 real eval failures, failure-targeted vs random arms
+at an equal 50-episode budget, arm-isolated retraining, and per-cell
+CI-gated comparison — ran end to end on the RTX 5090. Result: an
+informative null at this budget, plus a methodology finding (seed-matched
+baselines are mandatory; pooled comparisons fabricate ±5–9 pt swings).
+Round-1 pack: `artifacts/releases/flywheel_round1`; full account in
+[../reports/phase_b_campaign_report.md](../reports/phase_b_campaign_report.md) §4.
 
 ## What it is
 

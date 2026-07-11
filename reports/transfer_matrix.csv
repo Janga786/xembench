@@ -1,0 +1,8 @@
+policy_type,task,instruction_cond,color_cond,eval_task,train_embodiment,eval_embodiment,n_native,sr_native,native_ci_low,native_ci_high,n_transfer,sr_transfer,transfer_ci_low,transfer_ci_high,drop,retention
+bc,apple_bowl_g1,canonical,train,pick_cube_arm,g1,panda,0,,,,150,0.0,0.0,0.02497113914571871,,
+bc,pick_cube_arm,canonical,train,apple_bowl_g1,panda,g1,300,0.0,0.0,0.012643429997735661,150,0.0,0.0,0.02497113914571871,0.0,
+bc,stack_cube_arm,canonical,train,transport_box_g1,panda,g1,300,0.0,0.0,0.012643429997735661,150,0.0,0.0,0.02497113914571871,0.0,
+bc,transport_box_g1,canonical,train,stack_cube_arm,g1,panda,0,,,,150,0.0,0.0,0.02497113914571871,,
+bc_ppo,apple_bowl_g1,canonical,train,pick_cube_arm,g1,panda,0,,,,50,0.0,0.0,0.07135003417431873,,
+bc_ppo,pick_cube_arm,canonical,train,apple_bowl_g1,panda,g1,100,0.0,0.0,0.03699480747600191,50,0.0,0.0,0.07135003417431873,0.0,
+bc_ppo,stack_cube_arm,canonical,train,transport_box_g1,panda,g1,100,0.0,0.0,0.03699480747600191,50,0.0,0.0,0.07135003417431873,0.0,

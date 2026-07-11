@@ -20,7 +20,14 @@ git/env provenance, config snapshots, video index, project-page assets,
 checksums), episode schema v2, video index v2 with demo planning,
 report skeleton + results-writing guide. 115 tests.
 
-## Phase B — training & evaluation (Linux / RTX 5090) — ⏳ NEXT
+## Phase B — training & evaluation (Linux / RTX 5090) — ✅ completed 2026-07-09
+
+Executed end-to-end: 1,202 benchmark demos (+11.6k scaling set), 2 G1 PPO
+experts, 18 BC + 9 chunked-BC + arm-study policies, 73-cell eval matrix at
+corrected horizons, flywheel round 1, and the precision-manipulation
+intervention study. Numbers, findings, and reproduction:
+[reports/phase_b_campaign_report.md](../reports/phase_b_campaign_report.md).
+Original plan below, kept for the record.
 
 Follow `docs/phase_b_commands.md` steps 1–15 in order. Exact TODOs:
 

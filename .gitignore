@@ -46,3 +46,6 @@ tb_logs/
 .DS_Store
 .idea/
 .vscode/
+
+# campaign driver logs/markers (scripts live in scripts/campaign/)
+data/logs/

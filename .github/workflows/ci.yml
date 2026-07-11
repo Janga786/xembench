@@ -6,7 +6,7 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
       - name: Install CPU torch + pure deps
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install numpy pyyaml pandas tabulate h5py pytest
+          pip install numpy pyyaml pandas tabulate h5py pytest matplotlib imageio
 
       - name: Install xembench (no deps — simulator intentionally absent)
         run: pip install -e . --no-deps
@@ -47,4 +47,11 @@ jobs:
             tests/test_episode_records.py \
             tests/test_manifest.py \
             tests/test_figures.py \
+            tests/test_chunking.py \
+            tests/test_flywheel_schemas.py \
+            tests/test_flywheel_index.py \
+            tests/test_flywheel_candidates.py \
+            tests/test_flywheel_selection.py \
+            tests/test_flywheel_toy.py \
+            tests/test_flywheel_cli.py \
             tests/test_build_pack.py
