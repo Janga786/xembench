@@ -2,7 +2,7 @@
 
 How the repo went from the macOS-frozen `v0.3.1` to Phase-B-ready on the
 Linux / RTX 5090 box: what was run, what broke, what was fixed, and what
-remains risky. Work performed by Claude Code on branch `phase-b-linux-prep`;
+remains risky. Work performed on branch `phase-b-linux-prep`;
 result committed as `ad73a8b` and tagged **`v0.3.2-linux-ready`** (branch and
 tag on origin). Companion docs:
 [phase_b_linux_plan.md](../docs/phase_b_linux_plan.md) ·
