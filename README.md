@@ -11,24 +11,12 @@ interface. Two robot bodies — a Franka Panda arm and a Unitree G1 humanoid.
 xembench measures exactly how much manipulation skill survives the swap,
 and when it doesn't, its failure taxonomy and data flywheel say why.**
 
-<table>
-<tr>
-<td align="center"><img src="docs/media/g1_apple_place.gif" width="240"/><br/>
-<sub>G1 expert: <i>“pick up the red apple and place it in the bowl”</i></sub></td>
-<td align="center"><img src="docs/media/bc_push_t.gif" width="240"/><br/>
-<sub>BC from pixels+language: <i>“push the t-shaped block onto the red target”</i> — 45.7%</sub></td>
-</tr>
-<tr>
-<td align="center"><img src="docs/media/bc_transport.gif" width="240"/><br/>
-<sub>Humanoid BC: <i>“pick up the box and carry it to the other table”</i> — 18.8%</sub></td>
-<td align="center"><img src="docs/media/bc_pick_timeout.gif" width="240"/><br/>
-<sub>What the open problem looks like: last-inch grasp failure (timeout)</sub></td>
-</tr>
-</table>
-
-Built solo on ManiSkill3 + a single RTX 5090. Every number below traces to
-a checkpoint + config snapshot + git SHA; every video re-runs an exact
-evaluation episode seed.
+Built on ManiSkill3 + a single RTX 5090. The design, experiments, analysis,
+and conclusions are mine; AI coding agents assisted substantial parts of the
+implementation and campaign operations (see Provenance at the bottom). Every
+number below is recorded with its checkpoint, config snapshot, and git SHA in
+the run's artifact pack; the campaign reports in `reports/` summarize them
+(packs are regenerable and not committed — available on request).
 
 ## Results (v2 matrix — 73 cells, 6,550 episodes, 3 seeds, Wilson CIs)
 
@@ -36,7 +24,7 @@ evaluation episode seed.
 |---|---|---:|---:|---|
 | push_t | Panda (stick) | **45.7%** | 46.3% | language grounding robust |
 | transport_box | **G1 humanoid** | **18.8%** | 21.0% | learned from 8.5%-stochastic expert demos |
-| pull_tool | Panda | 1.3% → **14.7%** | 15.3% | chunked BC, matrix-grade (3 seeds × 600 eps) |
+| pull_tool | Panda | 1.3% → **14.7%** | 15.3% | chunked BC, matrix-grade (3 seeds × 100 eps/cell) |
 | pick_cube | Panda | 0% | 0% | the open problem (see study below) |
 | stack_cube | Panda | 0% | 0% | " |
 | apple_bowl | G1 humanoid | 0% | 0% | thin-demo imitation failure (finding 3) |
@@ -76,8 +64,9 @@ strategy moves it.
 The bottleneck is the policy class: single-frame MLP-head BC at 128 px,
 versus the transformer sequence models (ACT, diffusion policies) that
 solve this regime elsewhere. That gap is now this benchmark's central,
-*quantified* open problem — and 12,900 validated demonstrations plus the
-per-task collection infrastructure are staged for whoever closes it.
+*quantified* open problem — and ~12,800 validated demonstrations (1,202
+benchmark + 11.6k scaling) plus the per-task collection infrastructure are
+staged for whoever closes it.
 
 ## Physical AI Data Flywheel (first real round, executed)
 
@@ -88,7 +77,9 @@ budget): **an informative null** — deltas inside CIs, plus a methodology
 finding (single-seed vs pooled-baseline comparisons fabricate ±5–9 pt
 phantom swings; seed-matched CSVs are now the standard). Round 1's
 recommendation — pair data with a compounding-error intervention — became
-the study above. Packs: `artifacts/releases/flywheel_round1`.
+the study above. Packs are regenerable from the committed configs and are
+not stored in-repo (`artifacts/releases/` is gitignored); seed-matched CSVs
+are summarized in `reports/`.
 
 ## What's inside
 
@@ -203,6 +194,15 @@ seam is built for more bodies (Isaac Lab / LeRobot / hardware).
   note   = {https://github.com/Janga786/xembench}
 }
 ```
+
+## Provenance & AI assistance
+
+The benchmark design, task and action-space choices, experiment designs, the
+decisions about what to run and what to conclude, and every claim above are
+mine. Substantial parts of the implementation and the campaign's operations
+were carried out with AI coding agents under my direction, matching the
+attribution on my portfolio. Simulation, tasks, and planners build on the
+upstream systems credited below.
 
 Built on [ManiSkill3](https://github.com/haosulab/ManiSkill) (Mu et al.);
 action chunking follows Zhao et al., *Learning Fine-Grained Bimanual
