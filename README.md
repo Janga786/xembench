@@ -104,7 +104,7 @@ flowchart LR
   cards; videos re-run exact episode seeds (`scripts/record_rollouts.py`).
 - 198 tests (unit + sim integration), CI on pure-unit subset.
 
-## Battle scars (selected findings, all reproducible from `data/logs/`)
+## Battle scars (selected findings, from the run logs — not committed, available on request)
 
 1. **Eval horizons were impossible by construction** — frozen 50-step caps
    vs 66–105-step demos; measured as 0%/100%-timeout, fixed to demo-p95,
