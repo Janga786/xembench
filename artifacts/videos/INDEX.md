@@ -2,6 +2,8 @@
 
 11 videos under `artifacts/videos` (regenerate: `python -m xembench.analysis.video_index`).
 
+The video files themselves are not committed to this repository, so the links below do not resolve on GitHub. Re-record with `scripts/record_rollouts.py`.
+
 | task | embodiment | policy | split | seed | result | file |
 |---|---|---|---|---|---|---|
 | pick_cube_arm | panda | bc | canonical | 100000 | failure_timeout | [pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4](raw/pick_cube_arm__panda__bc__canonical__100000__failure_timeout.mp4) |
