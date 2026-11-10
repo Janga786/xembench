@@ -1,209 +1,196 @@
-# xembench — X-Embodiment Language-Grounded Manipulation Benchmark
+# xembench: cross-embodiment language-conditioned manipulation in ManiSkill3
 
 [![CI](https://github.com/Janga786/xembench/actions/workflows/ci.yml/badge.svg)](https://github.com/Janga786/xembench/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/tag/Janga786/xembench?label=release)](https://github.com/Janga786/xembench/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
-![Simulator](https://img.shields.io/badge/simulator-ManiSkill3%20%2F%20SAPIEN-orange)
 
-**One language-conditioned policy network. One canonical 21-dim action
-interface. Two robot bodies — a Franka Panda arm and a Unitree G1 humanoid.
-xembench measures exactly how much manipulation skill survives the swap,
-and when it doesn't, its failure taxonomy and data flywheel say why.**
+xembench is a simulation study and evaluation harness. It asks how much of a
+language-conditioned manipulation policy survives when the same network is
+moved from one robot body to another: a Franka Panda arm and the upper body
+of a Unitree G1 humanoid, both in ManiSkill3. Both bodies share one 21-dim
+canonical action interface, with a thin adapter per robot.
 
-Built on ManiSkill3 + a single RTX 5090. The design, experiments, analysis,
-and conclusions are mine; AI coding agents assisted substantial parts of the
-implementation and campaign operations (see Provenance at the bottom). Every
-number below is recorded with its checkpoint, config snapshot, and git SHA in
-the run's artifact pack; the campaign reports in `reports/` summarize them
-(packs are regenerable and not committed — available on request).
+**Status, plainly.** The pipeline runs end to end, and I ran a 6,550-episode
+baseline evaluation on one RTX 5090 in July 2026. The cross-embodiment
+question itself is not answered yet. The behavior-cloning (BC) baselines
+score 0% natively on every task that is paired for transfer, so every
+transfer cell is 0% and no transfer drop can be measured. Everything here is
+simulation only; nothing ran on a physical robot.
 
-## Results (v2 matrix — 73 cells, 6,550 episodes, 3 seeds, Wilson CIs)
+## What I built
 
-| Task | Embodiment | BC native success | Held-out paraphrase | Notes |
-|---|---|---:|---:|---|
-| push_t | Panda (stick) | **45.7%** | 46.3% | language grounding robust |
-| transport_box | **G1 humanoid** | **18.8%** | 21.0% | learned from 8.5%-stochastic expert demos |
-| pull_tool | Panda | 1.3% → **14.7%** | 15.3% | chunked BC, matrix-grade (3 seeds × 100 eps/cell) |
-| pick_cube | Panda | 0% | 0% | the open problem (see study below) |
-| stack_cube | Panda | 0% | 0% | " |
-| apple_bowl | G1 humanoid | 0% | 0% | thin-demo imitation failure (finding 3) |
+- Six tasks across three bodies (Panda, Panda with a stick tool, G1 upper
+  body). Two are my language-wrapped versions of ManiSkill's PickCube and
+  StackCube; the others are ManiSkill3 stock environments.
+- A 21-dim canonical action space with per-robot adapters, round-trip tests,
+  and live joint-order checks ([docs/canonical_action_space.md](docs/canonical_action_space.md)).
+- A language stack with a train / held-out paraphrase split and disjoint
+  train / unseen color sets, both enforced by tests.
+- Demonstration generation: mplib motion planning for pick_cube and
+  stack_cube, ManiSkill's published demos for PushT and PullCubeTool, and PPO experts I
+  trained for the two G1 tasks.
+- One BC policy network for all bodies (optional action chunking), a
+  CleanRL-style PPO trainer, an evaluation matrix with 95% Wilson
+  confidence intervals, a failure taxonomy, and a data-selection
+  ("flywheel") module.
+- 198 tests: 193 run without the simulator, 5 need ManiSkill. GitHub
+  Actions runs a pure-unit subset.
 
-Cross-embodiment transfer cells are all ≈0% at these baselines — the
-benchmark's headline metric is *waiting for a policy class strong enough
-to cross it*, and everything needed to measure that day is in place.
+## Results (simulation, BC baselines)
 
-## The precision-manipulation study (an honest negative result)
+Native success, 3 seeds x 100 episodes = 300 episodes per cell, 95% Wilson
+CI. Source: [reports/summary.md](reports/summary.md),
+[reports/failures.md](reports/failures.md).
 
-Half the tasks sat at 0% with a single failure label: timeout. We proved
-the pipeline innocent first — **open-loop replay of ground-truth
-demonstration actions through the identical adapter→env path succeeds
-5/5** — then systematically attacked the policy:
+| Task | Body | Canonical instruction | Held-out paraphrase |
+|---|---|---:|---:|
+| push_t | Panda + stick | 45% [39, 51] | 46% [41, 52] |
+| transport_box | G1 | 17% [13, 21] | 21% [17, 26] |
+| pull_tool | Panda | 2% [1, 5] | 0% [0, 2] |
+| pick_cube | Panda | 0% [0, 1] | 0% [0, 1] |
+| stack_cube | Panda | 0% [0, 1] | 0% [0, 1] |
+| apple_bowl | G1 | 0% [0, 1] | 0% [0, 1] |
 
-<img src="docs/media/pick_scaling.png" width="520"/>
+- Cross-embodiment transfer (pick_cube <-> apple_bowl, stack_cube <->
+  transport_box, both directions): 0% in all cells (150 episodes per BC
+  cell, 50 per BC+PPO cell)
+  ([reports/transfer_matrix.md](reports/transfer_matrix.md)). Because one
+  side of each pair is already 0% natively, this says nothing yet about
+  transfer.
+- Held-out paraphrases did not lower success on the two tasks that work.
+- PPO fine-tuning from the BC policies (pick, stack, apple_bowl; 1 seed)
+  stayed at 0%.
 
-| Intervention (pick_cube, 25–50-ep probes) | Result |
+## Follow-up: why pick_cube stays at 0%
+
+Replaying the ground-truth demonstration actions open-loop through the same
+adapter and environment succeeded 5 of 5 times, so the interface and data
+are not the cause. Instrumented rollouts reach within 2-3 cm of the cube and
+close the gripper, but do not complete the grasp.
+
+I then tried single-seed probes of 25-50 episodes each. At this size, 4%
+means 1 success in 25 episodes.
+
+<img src="docs/media/pick_scaling.png" width="520" alt="pick_cube success vs number of demonstrations for single-step and chunked BC"/>
+
+| Change (pick_cube probe) | Success |
 |---|---:|
-| single-step BC, 200 demos (baseline) | 0% |
-| + 10× demonstrations (2,000) | 0% |
-| + action chunking k=16 (Zhao et al. 2023) | 0% |
-| + temporal ensembling | 0% |
-| **action chunking k=8 + 10× demos** | **4%** (probe) → 0.2% matrix |
-| + gripper binarization / receding horizon | 4% |
-| + ResNet-18 encoder (4× params) | 0% (overfits) |
-| + 50× demonstrations (10,000) | 2% (flat) |
-| dense-reward visual PPO fine-tune | 0.1% (KL-unstable) |
+| single-step BC, 200 demos | 0% |
+| 2,000 demos | 0% |
+| action chunking k=16, 200 demos | 0% |
+| temporal ensembling | 0% |
+| action chunking k=8, 2,000 demos | 4% |
+| k=8 plus gripper binarization or receding horizon | 4% |
+| ResNet-18 encoder | 0% (overfits) |
+| 10,000 demos, k=8 | 2% |
+| dense-reward visual PPO fine-tune | 0.1% |
 
-The same recipe promoted to matrix scale (3 seeds × 100 episodes/cell)
-lifted **pull_tool from 1.3% to 14.7%** — tool use hooks and drags, no
-precision grasp required — while pick/stack stayed ≈0% (the 4% probe was
-single-seed noise). Diagnosis (instrumented rollouts): reaching is accurate
-to 2–3 cm and the gripper commits fully — failures concentrate in
-**last-inch grasp conversion**, and neither data volume nor execution
-strategy moves it.
-The bottleneck is the policy class: single-frame MLP-head BC at 128 px,
-versus the transformer sequence models (ACT, diffusion policies) that
-solve this regime elsewhere. That gap is now this benchmark's central,
-*quantified* open problem — and ~12,800 validated demonstrations (1,202
-benchmark + 11.6k scaling) plus the per-task collection infrastructure are
-staged for whoever closes it.
+Rerun at 3 seeds x 100 episodes, the k=8 / 2,000-demo recipe gave
+pick_cube 0.2% and stack_cube 0.1%, so the 4% probe did not replicate. The
+same recipe raised pull_tool from 1.3% to 14.7% (held-out paraphrase 15.3%).
+These chunked-BC numbers come from
+[reports/phase_b_campaign_report.md](reports/phase_b_campaign_report.md)
+section 4b; their per-episode CSV is not committed.
 
-## Physical AI Data Flywheel (first real round, executed)
+My reading: with this setup (single-frame BC, 128 px images, MLP action
+head), more data and different execution strategies did not fix
+grasp-critical tasks. Sequence models such as ACT or diffusion policies are
+the obvious next baseline. I have not tried them.
 
-`xembench.flywheel` closes the loop eval failures → typed candidate
-requests → budgeted selection → validated collection → retraining →
-CI-gated round comparison. Round 1 (targeted vs random arms, 50-episode
-budget): **an informative null** — deltas inside CIs, plus a methodology
-finding (single-seed vs pooled-baseline comparisons fabricate ±5–9 pt
-phantom swings; seed-matched CSVs are now the standard). Round 1's
-recommendation — pair data with a compounding-error intervention — became
-the study above. Packs are regenerable from the committed configs and are
-not stored in-repo (`artifacts/releases/` is gitignored); seed-matched CSVs
-are summarized in `reports/`.
+## Data-selection round 1
 
-## What's inside
+One round comparing failure-targeted vs random collection of 50 extra
+episodes. Result: no difference (+0.11 vs -0.28 points, inside the noise).
+A methods lesson came out of it: comparing a single-seed arm against a
+pooled 3-seed baseline produced false swings of 5-9 points; seed-matched
+comparison removed them. Details in the campaign report, section 4.
 
-```mermaid
-flowchart LR
-  D[demo generators<br/>mplib planner · PPO experts] -->|HDF5 + schema validation| DS[(1,202-demo<br/>benchmark set<br/>+ 11.6k scaling set)]
-  DS --> BC[BC / chunked BC<br/>one network, all bodies]
-  BC --> EV[eval matrix<br/>native · paraphrase · color · transfer]
-  EV -->|episode CSVs, Wilson CIs| AN[failure taxonomy<br/>transfer matrix · reports]
-  AN --> FW[data flywheel<br/>candidates → selection → rounds]
-  FW -->|targeted collection| DS
-  EV --> PK[artifact packs<br/>manifest · checksums · cards]
-```
+## Engineering problems found and fixed
 
-- **Canonical action space** (21-dim) + thin per-robot adapters with
-  round-trip invariants and live-env joint-order validation — transfer is
-  a pure adapter swap at eval time.
-- **Language stack**: leak-free train/held-out paraphrase split, disjoint
-  train/unseen color sets, both enforced by tests.
-- **Provenance discipline**: every run directory carries its config + git
-  SHA; artifact packs bundle metrics, figures, checksums, dataset/model
-  cards; videos re-run exact episode seeds (`scripts/record_rollouts.py`).
-- 198 tests (unit + sim integration), CI on pure-unit subset.
+Details in [reports/phase_b_campaign_report.md](reports/phase_b_campaign_report.md)
+and [reports/b0_linux_prep_report.md](reports/b0_linux_prep_report.md).
 
-## Battle scars (selected findings, from the run logs — not committed, available on request)
+1. Evaluation time limits were shorter than the demonstrations (50-step
+   caps vs 66-105-step demos). Reset to the demo-length 95th percentile plus a
+   margin and re-ran the whole matrix.
+2. PhysX GPU collision memory demand grew as the policy learned contact
+   (8M to 150M bytes); the 4M default silently dropped contacts at 2,048
+   envs.
+3. A PPO success statistic read 100% for a bad policy, because short
+   windows contained only early-terminating successes. Fixed by pooling
+   episodes across windows.
+4. Staged reward bonuses caused PPO KL spikes (approx_kl 28.5) once
+   successes began; added a target-KL epoch cutoff.
+5. The G1 hand joints are mirrored in the URDF, so one constant opened one
+   hand and closed the other. A joint-sweep check caught it before demo
+   collection.
 
-1. **Eval horizons were impossible by construction** — frozen 50-step caps
-   vs 66–105-step demos; measured as 0%/100%-timeout, fixed to demo-p95,
-   re-run.
-2. **PhysX collision-stack demand grows as the policy learns contact**
-   (8M → 150M bytes; default 4M silently drops contacts at 2048 envs).
-3. **A success metric that read 100% for a bad policy** — successes
-   terminate early, failures truncate together; windows without a
-   truncation step contain only successes. Fixed with rolling episode
-   pooling.
-4. **Staged reward bonuses detonate PPO's KL** exactly when success
-   emerges (approx_kl 28.5 observed); target-KL epoch cutoff added.
-5. **Stochastic-expert demos imitate better than lucky-deterministic
-   ones** (transport 18.8% from an 8.5% expert vs apple 0% from a 6% one).
-6. **The G1's hand joints are URDF-mirrored** — the frozen constants
-   opened one hand while closing the other; caught by a joint-sweep
-   diagnostic before it corrupted every canonical demo.
+## What is and is not in this repo
 
-Full story: [reports/phase_b_campaign_report.md](reports/phase_b_campaign_report.md) ·
-[reports/b0_linux_prep_report.md](reports/b0_linux_prep_report.md)
+Committed: all code, configs, tests, aggregated result tables in
+[reports/](reports/), the two campaign reports, and the scaling figure.
+Not committed: per-episode CSVs, demonstrations, checkpoints, run logs,
+artifact packs, and rollout videos (the video index in
+`artifacts/videos/` lists files that are not in the repo).
+The numbers above can be checked against the committed tables, but not
+re-derived from raw data without re-running.
 
-## Quickstart
+## Running it
 
 ```bash
-# Linux + NVIDIA (tested: RTX 5090 / cu128)
+# Linux + NVIDIA (tested on RTX 5090 / CUDA 12.8)
 ./scripts/setup_linux.sh        # uv env, CUDA/Vulkan checks, sim FPS bench
-make smoke                      # full pipeline gate (~10 min)
-make phase-b-help               # the ordered training runbook
-make flywheel-help              # the data-flywheel CLI
+make smoke                      # full pipeline check (~10 min)
+make phase-b-help               # ordered training runbook
 
-# macOS (development / smoke only)
+# macOS (development and smoke tests only)
 ./scripts/setup_mac.sh && make smoke
 ```
 
-Common entry points: `make test` / `make test-sim` / `make check` ·
-train `uv run python -m xembench.scripts.train_bc --config configs/presets/bc_train_full.yaml --set task=pick_cube_arm --set chunk=8` ·
-evaluate `uv run python -m xembench.scripts.evaluate --config configs/presets/full_eval_matrix.yaml`.
-Every script takes `--seed` and `--set key=value`; presets live in
-`configs/presets/`.
+`make test` runs the simulator-free tests; `make test-sim` runs the 5
+ManiSkill tests. Example:
+`uv run python -m xembench.scripts.train_bc --config configs/presets/bc_train_full.yaml --set task=pick_cube_arm --set chunk=8`,
+then
+`uv run python -m xembench.scripts.evaluate --config configs/presets/full_eval_matrix.yaml`.
+Evaluation writes `data/results/eval.csv`; rows where `task` and
+`eval_task` differ are transfer cells. Metric definitions:
+[docs/metrics.md](docs/metrics.md).
 
-## Repository structure
+## Repository layout
 
 ```
 src/xembench/
-  constants.py     canonical action/proprio layout, pinned joint orders (source of truth)
-  embodiment/      EmbodimentAdapter base + panda/panda_stick/g1 + registry
-  envs/            factory, UnifiedObsWrapper, custom *Lang-v1 envs
+  constants.py     canonical action/proprio layout, pinned joint orders
+  embodiment/      adapter base class, panda / panda_stick / g1, registry
+  envs/            env factory, observation wrapper, *Lang-v1 envs
   language/        templates, paraphrase split, tokenizer, parser
-  data/            HDF5 schema/writer/validator, DemoDataset (chunked), HF converter
-  experts/         motion-planning collector (mplib), PPO-expert loader
-  models/          encoders, BCPolicy (+action chunking), actor-critics
-  training/        BC trainer, CleanRL PPO (target-KL, warm start, env_kwargs)
-  eval/            episode runner (chunk queues/ensembling, Wilson CIs), matrix
-  analysis/        failure taxonomy, episode CSVs, transfer matrix, video index
-  flywheel/        schemas, dataset index/validation/cards, candidates,
-                   selection strategies, round comparison, flywheel packs
-configs/           tasks.yaml registry (horizons = demo p95), presets/
-docs/              architecture, canonical space, plans, runbooks, flywheel specs
-reports/           campaign reports + generated summaries
-artifacts/         packs, videos (INDEX.md tracked), media
+  data/            HDF5 schema, writer, validator, dataset (chunked)
+  experts/         mplib motion-planning collector, PPO-expert loader
+  models/          encoders, BC policy (+ action chunking), actor-critics
+  training/        BC trainer, PPO
+  eval/            episode runner, evaluation matrix, Wilson CIs
+  analysis/        failure taxonomy, episode CSVs, transfer matrix
+  flywheel/        data-selection schemas, validation, candidates, rounds
+configs/           task registry and presets
+docs/              design notes, runbooks, and planning documents
+reports/           campaign reports and generated result tables
 ```
-
-## Interpreting results
-
-`data/results/eval.csv`: `task` = training task, `eval_task` = evaluation
-task; rows where they differ are transfer cells. Headline metric:
-**transfer drop** `SR_native − SR_transfer` on pick_cube↔apple_bowl and
-stack_cube↔transport_box; paraphrase and unseen-color deltas are the
-secondary axes. Definitions: [docs/metrics.md](docs/metrics.md).
 
 ## Limitations
 
-Hand-designed canonical interface (kinematic aliasing documented);
-analogous rather than identical transfer pairs; two embodiments;
-128-px closed-vocabulary sim-only setting; BC baselines below the
-transfer-measurement threshold on precision tasks (the study above) —
-transformer-class baselines are the designed next step, and the adapter
-seam is built for more bodies (Isaac Lab / LeRobot / hardware).
+- Simulation only (ManiSkill3 / SAPIEN); no hardware.
+- Transfer is unmeasured: the paired tasks are at 0% natively.
+- Transfer pairs are analogous tasks, not identical ones, and there are
+  only two embodiments.
+- Baselines are single-frame BC at 128 px with a closed vocabulary.
+- The pick_cube intervention probes are single-seed and 25-50 episodes.
+- Raw per-episode data and checkpoints are not in the repo.
 
-## Citation
+## Credits
 
-```bibtex
-@misc{xembench2026,
-  title  = {xembench: An X-Embodiment Language-Grounded Manipulation Benchmark},
-  author = {Jangara Bliss},
-  year   = {2026},
-  note   = {https://github.com/Janga786/xembench}
-}
-```
-
-## Provenance & AI assistance
-
-The benchmark design, task and action-space choices, experiment designs, the
-decisions about what to run and what to conclude, and every claim above are
-mine. Substantial parts of the implementation and the campaign's operations
-were carried out with AI coding agents under my direction, matching the
-attribution on my portfolio. Simulation, tasks, and planners build on the
-upstream systems credited below.
-
-Built on [ManiSkill3](https://github.com/haosulab/ManiSkill) (Mu et al.);
-action chunking follows Zhao et al., *Learning Fine-Grained Bimanual
+Built on [ManiSkill3](https://github.com/haosulab/ManiSkill) and SAPIEN,
+including ManiSkill's stock environments and published
+demonstrations; motion planning uses mplib; the PPO trainer follows CleanRL.
+Action chunking follows Zhao et al., *Learning Fine-Grained Bimanual
 Manipulation with Low-Cost Hardware* (ACT), 2023.
+
+MIT License. See [LICENSE](LICENSE).
