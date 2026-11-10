@@ -11,9 +11,9 @@ canonical action interface, with a thin adapter per robot.
 
 **Status, plainly.** The pipeline runs end to end, and I ran a 6,550-episode
 baseline evaluation on one RTX 5090 in July 2026. The cross-embodiment
-question itself is not answered yet. The behavior-cloning (BC) baselines
-score 0% natively on every task that is paired for transfer, so every
-transfer cell is 0% and no transfer drop can be measured. Everything here is
+question itself is not answered yet. With the behavior-cloning (BC) baselines, at least one task in each transfer
+pair scores 0% natively, so every transfer cell is 0% and no transfer drop
+can be measured. Everything here is
 simulation only; nothing ran on a physical robot.
 
 ## What I built
@@ -82,11 +82,11 @@ means 1 success in 25 episodes.
 | k=8 plus gripper binarization or receding horizon | 4% |
 | ResNet-18 encoder | 0% (overfits) |
 | 10,000 demos, k=8 | 2% |
-| dense-reward visual PPO fine-tune | 0.1% |
+| dense-reward visual PPO fine-tune | 0.1% (training success at 460k steps; run stopped) |
 
 Rerun at 3 seeds x 100 episodes, the k=8 / 2,000-demo recipe gave
 pick_cube 0.2% and stack_cube 0.1%, so the 4% probe did not replicate. The
-same recipe raised pull_tool from 1.3% to 14.7% (held-out paraphrase 15.3%).
+same recipe raised pull_tool from 1.3% (mean of canonical and held-out) to 14.7% (held-out paraphrase 15.3%).
 These chunked-BC numbers come from
 [reports/phase_b_campaign_report.md](reports/phase_b_campaign_report.md)
 section 4b; their per-episode CSV is not committed.
